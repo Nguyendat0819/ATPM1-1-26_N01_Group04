@@ -1,0 +1,39 @@
+=== HRM KRIPKE + BMC VERIFICATION ===
+
+[LOGIN]
+reachable: AUTHENTICATED, AUTHENTICATING_INVALID, AUTHENTICATING_VALID, INACTIVE_USER, LOGGED_OUT, LOGIN_FAILED, UNAUTHENTICATED
+completeness threshold: 3
+safety safe-model: PASS
+BMC safe-model at threshold: NO COUNTEREXAMPLE
+safety faulty-model: FAIL
+faulty counterexample: UNAUTHENTICATED -> AUTHENTICATED
+liveness: PASS
+
+[ATTENDANCE]
+reachable: AUTHENTICATED, CHECKED_IN, CHECKED_OUT, CHECKIN_VALID, READY, VERIFY_FAILED
+completeness threshold: 4
+safety safe-model: PASS
+BMC safe-model at threshold: NO COUNTEREXAMPLE
+safety faulty-model: FAIL
+faulty counterexample: READY -> AUTHENTICATED -> CHECKED_OUT
+liveness: PASS
+
+[LEAVE]
+reachable: APPROVED, NO_REQUEST, PENDING, REJECTED
+completeness threshold: 2
+safety safe-model: PASS
+BMC safe-model at threshold: NO COUNTEREXAMPLE
+safety faulty-model: FAIL
+faulty counterexample: NO_REQUEST -> APPROVED
+liveness: PASS
+
+[PAYROLL]
+reachable: CALCULATING, DRAFT, NOT_CALCULATED, PAID
+completeness threshold: 3
+safety safe-model: PASS
+BMC safe-model at threshold: NO COUNTEREXAMPLE
+safety faulty-model: FAIL
+faulty counterexample: NOT_CALCULATED -> CALCULATING -> DRAFT -> PAID -> DRAFT
+liveness: PASS
+
+Saved: /mnt/data/work_hrm/SA25-26_ClassN01_Group05/verification/results/verification_results.json

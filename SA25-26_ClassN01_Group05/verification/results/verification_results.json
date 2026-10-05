@@ -1,0 +1,91 @@
+[
+  {
+    "function": "login",
+    "reachable_states": [
+      "AUTHENTICATED",
+      "AUTHENTICATING_INVALID",
+      "AUTHENTICATING_VALID",
+      "INACTIVE_USER",
+      "LOGGED_OUT",
+      "LOGIN_FAILED",
+      "UNAUTHENTICATED"
+    ],
+    "completeness_threshold": 3,
+    "safety_property": "AG(!forbidden_transition)",
+    "safe_safety_result": true,
+    "safe_bmc_counterexample_at_threshold": null,
+    "faulty_safety_result": false,
+    "faulty_counterexample": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATED"
+    ],
+    "liveness_result": true,
+    "liveness_bmc_counterexample": null
+  },
+  {
+    "function": "attendance",
+    "reachable_states": [
+      "AUTHENTICATED",
+      "CHECKED_IN",
+      "CHECKED_OUT",
+      "CHECKIN_VALID",
+      "READY",
+      "VERIFY_FAILED"
+    ],
+    "completeness_threshold": 4,
+    "safety_property": "AG(!forbidden_transition)",
+    "safe_safety_result": true,
+    "safe_bmc_counterexample_at_threshold": null,
+    "faulty_safety_result": false,
+    "faulty_counterexample": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKED_OUT"
+    ],
+    "liveness_result": true,
+    "liveness_bmc_counterexample": null
+  },
+  {
+    "function": "leave",
+    "reachable_states": [
+      "APPROVED",
+      "NO_REQUEST",
+      "PENDING",
+      "REJECTED"
+    ],
+    "completeness_threshold": 2,
+    "safety_property": "AG(!forbidden_transition)",
+    "safe_safety_result": true,
+    "safe_bmc_counterexample_at_threshold": null,
+    "faulty_safety_result": false,
+    "faulty_counterexample": [
+      "NO_REQUEST",
+      "APPROVED"
+    ],
+    "liveness_result": true,
+    "liveness_bmc_counterexample": null
+  },
+  {
+    "function": "payroll",
+    "reachable_states": [
+      "CALCULATING",
+      "DRAFT",
+      "NOT_CALCULATED",
+      "PAID"
+    ],
+    "completeness_threshold": 3,
+    "safety_property": "AG(!forbidden_transition)",
+    "safe_safety_result": true,
+    "safe_bmc_counterexample_at_threshold": null,
+    "faulty_safety_result": false,
+    "faulty_counterexample": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT",
+      "PAID",
+      "DRAFT"
+    ],
+    "liveness_result": true,
+    "liveness_bmc_counterexample": null
+  }
+]

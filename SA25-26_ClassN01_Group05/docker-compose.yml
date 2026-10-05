@@ -1,0 +1,457 @@
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  # =========================================================
+  # 0. LOAD BALANCER TỔNG (NGINX)
+  # =========================================================
+  nginx:
+    image: nginx:latest
+    container_name: lb-nginx
+    restart: always
+    ports:
+      - "80:80" # Nginx chiếm cổng 80 để đón khách
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - kong
+      - frontend
+    networks:
+      - app-network
+
+  # =========================================================
+  # 1. API GATEWAY (KONG) 
+  # =========================================================
+  kong:
+    image: kong:3.4
+    container_name: api-gateway
+    restart: always
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/usr/local/kong/declarative/kong.yml
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_LISTEN=0.0.0.0:8000
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+    ports:
+      - "8001:8001" # Giữ cổng Admin để debug nếu cần
+    volumes:
+      - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
+    networks:
+      - app-network
+
+  # =========================================================
+  # 2. BACKEND SERVICES
+  # =========================================================
+  auth_service:
+    build: ./auth_service
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=haproxy
+      - DB_PORT=5000
+      - DB_USER=postgres
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=postgres # ✅ ĐÃ SỬA: Chạy vào Database mặc định để không bị lỗi 500
+      - MONGO_URI=mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017/logs_db?replicaSet=rs0&readPreference=secondaryPreferred
+      - REDIS_HOST=redis
+      - JWT_SECRET=secret_key_cua_ban
+      - SMTP_USER=hnd10112005@gmail.com
+      - SMTP_PASS=cqzx yepa spwn twwa
+      - TZ=Asia/Ho_Chi_Minh
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - ./auth_service:/app
+      - /app/node_modules
+    command: sh -c "npm install --no-package-lock && npm start" # Đảm bảo thư viện được cài đặt vào anonymous volume
+    depends_on:
+      haproxy:
+        condition: service_started
+      postgres-1:
+        condition: service_healthy # 🔥 Ép Auth Service đợi DB khởi tạo xong hoàn toàn
+      mongo-init:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+
+  leave_service:
+    build: ./leave_service
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=haproxy
+      - DB_PORT=5000
+      - DB_USER=postgres
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=postgres # ✅ ĐÃ SỬA: Chạy vào Database mặc định
+      - MONGO_URI=mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017/logs_db?replicaSet=rs0&readPreference=secondaryPreferred
+      - REDIS_HOST=redis
+      - JWT_SECRET=secret_key_cua_ban
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./leave_service:/app
+      - ./leave_service/uploads:/app/uploads
+      - /app/node_modules
+    command: sh -c "npm install --no-package-lock && npm start"
+    depends_on:
+      haproxy:
+        condition: service_started
+      postgres-1:
+        condition: service_healthy # 🔥 Ép Leave Service đợi DB khởi tạo xong hoàn toàn
+      mongo-init:
+        condition: service_started
+    networks:
+      - app-network
+
+  noti_service:
+    build: ./noti_service
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=haproxy
+      - DB_PORT=5000
+      - DB_USER=postgres
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=postgres
+      - MONGO_URI=mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017/logs_db?replicaSet=rs0&readPreference=secondaryPreferred
+      - REDIS_HOST=redis
+      - JWT_SECRET=secret_key_cua_ban
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./noti_service:/app
+      - /app/node_modules
+    command: sh -c "npm install --no-package-lock && npm start"
+    depends_on:
+      haproxy:
+        condition: service_started
+      postgres-1:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+
+  attendance_service:
+    build: ./attendance_service
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=haproxy
+      - DB_PORT=5000
+      - DB_USER=postgres
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=postgres
+      - MONGO_URI=mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017/logs_db?replicaSet=rs0&readPreference=secondaryPreferred
+      - REDIS_HOST=redis
+      - JWT_SECRET=secret_key_cua_ban
+    depends_on:
+      haproxy:
+        condition: service_started
+      postgres-1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+
+  salary_service:
+    build: ./salary_service
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=haproxy
+      - DB_PORT=5000
+      - DB_USER=postgres
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=postgres
+      - MONGO_URI=mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017/logs_db?replicaSet=rs0&readPreference=secondaryPreferred
+      - REDIS_HOST=redis
+      - JWT_SECRET=secret_key_cua_ban
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./salary_service:/app
+      - /app/node_modules
+    command: sh -c "npm install --no-package-lock && npm start"
+    depends_on:
+      haproxy:
+        condition: service_started
+      postgres-1:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    environment:
+      # 🛑 SỬA LẠI: Trong Docker, localhost là chính nó. Phải dùng tên container Kong/Nginx
+      - VITE_APP_API_URL=http://api-gateway:8000
+    # XÓA DÒNG "command: ..." cũ đi, vì file vite.config.js đã tự lo rồi
+    ports:
+      - "3001:3000" # Đổi sang 3001 để tránh trùng với Grafana (3000)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install --no-package-lock && npm run dev"
+    stdin_open: true
+    tty: true
+    networks:
+      - app-network
+
+  # =========================================================
+  # 3. POSTGRES HA (PATRONI + ETCD + HAPROXY)
+  # =========================================================
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    command: etcd -advertise-client-urls http://etcd:2379 -listen-client-urls http://0.0.0.0:2379
+    networks:
+      - app-network
+
+  postgres-1:
+    image: registry.opensource.zalan.do/acid/spilo-15:3.0-p1
+    container_name: postgres-1
+    environment:
+      - SCOPE=leave-cluster
+      - ETCD3_HOSTS=etcd:2379
+      - PGPASSWORD_SUPERUSER=rootpassword # ✅ ĐÃ SỬA: Mật khẩu chuẩn theo Spilo Zalando
+      - PATRONI_NAME=pg1
+      - TZ=Asia/Ho_Chi_Minh
+      - SPILO_PROVIDER=local
+    ports:
+      - "5432"
+    depends_on:
+      - etcd
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -p 5432" ] # 🔥 Kiểm tra cổng DB sẵn sàng nhận kết nối chưa
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s # 🔥 Tăng thời gian chờ khởi động DB vì Spilo có thể mất thời gian để thiết lập cluster
+    networks:
+      - app-network
+
+  postgres-2:
+    image: registry.opensource.zalan.do/acid/spilo-15:3.0-p1
+    container_name: postgres-2
+    environment:
+      - SCOPE=leave-cluster
+      - ETCD3_HOSTS=etcd:2379
+      - PGPASSWORD_SUPERUSER=rootpassword # ✅ ĐÃ SỬA
+      - PATRONI_NAME=pg2
+      - TZ=Asia/Ho_Chi_Minh
+      - SPILO_PROVIDER=local
+    ports:
+      - "5432"
+    depends_on:
+      - etcd
+    networks:
+      - app-network
+
+  postgres-3:
+    image: registry.opensource.zalan.do/acid/spilo-15:3.0-p1
+    container_name: postgres-3
+    environment:
+      - SCOPE=leave-cluster
+      - ETCD3_HOSTS=etcd:2379
+      - PGPASSWORD_SUPERUSER=rootpassword # ✅ ĐÃ SỬA
+      - PATRONI_NAME=pg3
+      - TZ=Asia/Ho_Chi_Minh
+      - SPILO_PROVIDER=local
+    ports:
+      - "5432"
+    depends_on:
+      - etcd
+    networks:
+      - app-network
+
+  haproxy:
+    image: haproxy:2.4
+    container_name: pg-lb
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "7000:7000"
+    depends_on:
+      - postgres-1
+      - postgres-2
+      - postgres-3
+    networks:
+      - app-network
+      # =========================================================
+  # 4. MONGODB REPLICA SET (HA)
+  # =========================================================
+  mongo-1:
+    image: mongo:6.0
+    container_name: mongo-1
+    command: [ "--replSet", "rs0", "--bind_ip_all" ]
+    ports:
+      - "27017"
+    networks:
+      - app-network
+
+  mongo-2:
+    image: mongo:6.0
+    container_name: mongo-2
+    command: [ "--replSet", "rs0", "--bind_ip_all" ]
+    ports:
+      - "27017"
+    networks:
+      - app-network
+
+  mongo-3:
+    image: mongo:6.0
+    container_name: mongo-3
+    command: [ "--replSet", "rs0", "--bind_ip_all" ]
+    ports:
+      - "27017"
+    networks:
+      - app-network
+
+  mongo-init:
+    image: mongo:6.0
+    depends_on:
+      - mongo-1
+      - mongo-2
+      - mongo-3
+    command: >
+      mongosh --host mongo-1:27017 --eval  'rs.initiate({
+        _id: "rs0",
+        members: [
+          { _id: 0, host: "mongo-1:27017" },
+          { _id: 1, host: "mongo-2:27017" },
+          { _id: 2, host: "mongo-3:27017" }
+        ]
+      })'
+    networks:
+      - app-network
+
+  # =========================================================
+  # 5. REDIS
+  # =========================================================
+  redis:
+    image: redis:alpine
+    container_name: broker-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - app-network
+
+  # =========================================================
+  # 6. MONITORING STACK (PROMETHEUS & GRAFANA)
+  # =========================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-storage:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+    depends_on:
+      - blackbox_exporter
+      - alertmanager
+    networks:
+      - app-network
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    restart: always
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - app-network
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    restart: always
+    ports:
+      - "9115:9115"
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000" # Grafana chiếm cổng 3000 (Frontend đã đổi sang 3001)
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin123"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana-dashboard.json:/etc/grafana/provisioning/dashboards/hrm-health.json:ro
+      - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+    networks:
+      - app-network
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres_exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:rootpassword@haproxy:5000/postgres?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - app-network
+
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis_exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - app-network
+
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.40.0
+    container_name: mongodb_exporter
+    command: ["--compatible-mode"]
+    environment:
+      - MONGODB_URI=mongodb://mongo-1:27017/?directConnection=true
+    ports:
+      - "9216:9216"
+    networks:
+      - app-network
+
+volumes:
+  grafana-storage:
+  prometheus-storage:
