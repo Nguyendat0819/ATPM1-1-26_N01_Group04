@@ -1,0 +1,95 @@
+_format_version: "2.1"
+
+services:
+  - name: auth-service
+    url: http://auth_service:3000
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100 # Cực kỳ quan trọng: Chỉ cho phép 1 IP gọi API Auth/OTP 100 lần/phút
+          limit_by: ip
+          policy: local
+    routes:
+      - name: auth-routes
+        paths:
+          - /api/auth_ser
+          - /api/otp
+          - /health/auth
+        strip_path: false
+
+  - name: leave-service
+    url: http://leave_service:3000
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60 # Giới hạn 60 lượt gọi/phút cho các API thông thường (tránh DDoS)
+          limit_by: ip
+          policy: local
+    routes:
+      - name: leave-routes
+        paths:
+          - /api/leave_ser
+          - /api/users
+          - /uploads
+          - /socket.io
+          - /health/leave
+        strip_path: false
+
+  - name: attendance-service
+    url: http://attendance_service:3000
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          limit_by: ip
+          policy: local
+    routes:
+      - name: attendance-routes
+        paths:
+          - /api/attendance
+          # Vì vậy thêm cả /api/attendance/ giúp bao luôn trường hợp có hoặc không có dấu slash, và các subpath phía sau. -> route chính
+          - /api/attendance/
+          # /api/attendance/ : request đi tới /api/attendance/generate-code  -> tránh sai khi có slash thừa/ thiếu
+          - /api/attendance_ser
+          - /api/attendance_ser/
+          # /api/attendance_ser và /api/attendance_ser/ → tương thích cũ
+          - /health/attendance
+        strip_path: false
+  - name: noti-service
+    url: http://noti_service:3000
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          limit_by: ip
+          policy: local
+    routes:
+      - name: noti-routes
+        paths:
+          - /api/noti_ser
+          - /health/noti
+        strip_path: false
+
+  - name: salary-service
+    url: http://salary_service:3000
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          limit_by: ip
+          policy: local
+    routes:
+      - name: salary-routes
+        paths:
+          - /api/salary_ser
+          - /health/salary
+        strip_path: false
+
+plugins:
+  - name: prometheus
+    config:
+      per_consumer: false
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
