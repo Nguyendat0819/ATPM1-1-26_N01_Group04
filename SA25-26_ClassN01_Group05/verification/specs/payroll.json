@@ -1,0 +1,21 @@
+{
+  "name": "payroll",
+  "title": "Tính và thanh toán lương",
+  "states": [
+    {"id": "NOT_CALCULATED", "labels": ["not_calculated", "valid_payroll_input"], "initial": true},
+    {"id": "CALCULATING", "labels": ["calculating"]},
+    {"id": "DRAFT", "labels": ["draft", "payroll_ready"]},
+    {"id": "PAID", "labels": ["paid"]}
+  ],
+  "transitions": [
+    ["NOT_CALCULATED", "CALCULATING"],
+    ["CALCULATING", "DRAFT"],
+    ["DRAFT", "PAID"],
+    ["PAID", "PAID"]
+  ],
+  "properties": {
+    "safety": {"id": "P1", "forbidden_edge": ["PAID", "DRAFT"], "formula": "AG(!paid_to_draft)", "description": "Bảng lương đã thanh toán không quay lại bản nháp."},
+    "liveness": {"id": "P2", "starts": ["NOT_CALCULATED"], "target_labels": ["draft"], "formula": "AF(draft)", "description": "Dữ liệu lương hợp lệ cuối cùng tạo được bảng lương nháp."}
+  },
+  "faulty_transition": ["PAID", "DRAFT"]
+}

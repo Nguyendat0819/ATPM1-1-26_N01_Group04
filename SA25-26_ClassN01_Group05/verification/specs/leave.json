@@ -1,0 +1,22 @@
+{
+  "name": "leave",
+  "title": "Duyệt đơn nghỉ phép",
+  "states": [
+    {"id": "NO_REQUEST", "labels": ["no_request"], "initial": true},
+    {"id": "PENDING", "labels": ["pending", "valid_leave_request"]},
+    {"id": "APPROVED", "labels": ["approved"]},
+    {"id": "REJECTED", "labels": ["rejected"]}
+  ],
+  "transitions": [
+    ["NO_REQUEST", "PENDING"],
+    ["PENDING", "APPROVED"],
+    ["PENDING", "REJECTED"],
+    ["APPROVED", "NO_REQUEST"],
+    ["REJECTED", "NO_REQUEST"]
+  ],
+  "properties": {
+    "safety": {"id": "LV1", "forbidden_edge": ["NO_REQUEST", "APPROVED"], "formula": "AG(!approved_without_pending)", "description": "Đơn chỉ được duyệt sau khi đã ở trạng thái chờ duyệt."},
+    "liveness": {"id": "LV2", "starts": ["PENDING"], "target_labels": ["approved", "rejected"], "formula": "AF(approved OR rejected)", "description": "Đơn đang chờ cuối cùng được duyệt hoặc từ chối."}
+  },
+  "faulty_transition": ["NO_REQUEST", "APPROVED"]
+}

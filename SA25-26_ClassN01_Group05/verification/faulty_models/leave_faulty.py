@@ -1,9 +1,10 @@
+"""Generated faulty model for leave; used to check counterexample detection."""
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "models"))
-from leave_kripke import build_model as safe
+from leave_kripke import build_model as build_safe_model
 
 def build_model():
-    k = safe()
-    k.add_transition("NO_REQUEST", "APPROVED")
-    return k
+    model = build_safe_model()
+    model.add_transition('NO_REQUEST', 'APPROVED')
+    return model
