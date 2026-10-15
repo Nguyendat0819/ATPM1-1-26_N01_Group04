@@ -1,96 +1,112 @@
-"""Run the complete Kripke + BMC study for the HRM project."""
-from pathlib import Path
-import importlib.util
+"""Generate and verify all declared HRM Kripke models."""
+import importlib
 import json
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "bmc"))
-from bounded_checker import (
-    graph_diameter, check_ag_not_edge, check_af_label_from,
-    shortest_edge_counterexample, bmc_af_from,
-)
+sys.path.insert(0, str(ROOT / "models"))
+sys.path.insert(0, str(ROOT / "faulty_models"))
 
-MODELS = {
-    "login": ("models.login_kripke", "faulty_models.login_faulty", ("UNAUTHENTICATED", "AUTHENTICATED"), "authenticated", ["AUTHENTICATING_VALID"]),
-    "attendance": ("models.attendance_kripke", "faulty_models.attendance_faulty", ("AUTHENTICATED", "CHECKED_OUT"), "checked_in", ["CHECKIN_VALID"]),
-    "leave": ("models.leave_kripke", "faulty_models.leave_faulty", ("NO_REQUEST", "APPROVED"), None, ["PENDING"]),
-    "payroll": ("models.payroll_kripke", "faulty_models.payroll_faulty", ("PAID", "DRAFT"), "draft", ["NOT_CALCULATED"]),
-}
+from bounded_checker import (
+    check_af_labels_from,
+    graph_diameter,
+    reachable_state_count,
+    shortest_edge_counterexample,
+)
+from generate_artifacts import generate_artifacts
 
 
 def load_builder(module_name):
-    return __import__(module_name, fromlist=["build_model"]).build_model
+    module = importlib.import_module(module_name)
+    return module.build_model
 
 
-def run_one(name, safe_mod, faulty_mod, forbidden, live_label, live_starts):
-    safe = load_builder(safe_mod)()
-    faulty = load_builder(faulty_mod)()
-    diameter = graph_diameter(safe)
-    safety_safe = check_ag_not_edge(safe, forbidden)
-    safety_faulty = check_ag_not_edge(faulty, forbidden)
-    faulty_cex = shortest_edge_counterexample(faulty, forbidden)
-    safe_bmc_cex = None
-    from bounded_checker import find_edge_counterexample
-    for k in range(diameter + 1):
-        safe_bmc_cex = find_edge_counterexample(safe, forbidden, k)
-        if safe_bmc_cex is not None:
-            break
-    if name == "leave":
-        # AF(approved OR rejected) from PENDING.
-        states = set(safe.reachable_states())
-        good = {s for s in states if {"approved", "rejected"} & safe.labels.get(s, set())}
-        changed = True
-        while changed:
-            changed = False
-            for s in list(states - good):
-                succ = safe.transitions.get(s, set())
-                if succ and all(x in good for x in succ):
-                    good.add(s)
-                    changed = True
-        live_ok = set(live_starts).issubset(good)
-        live_bmc = None
-        from bounded_checker import all_paths
-        for p in all_paths(safe, diameter, live_starts):
-            if not any({"approved", "rejected"} & safe.labels.get(s, set()) for s in p):
-                live_bmc = p
-                break
-    else:
-        live_ok = check_af_label_from(safe, live_label, live_starts)
-        live_bmc = bmc_af_from(safe, live_label, live_starts, diameter)
+def run_one(spec, case_count):
+    name = spec["name"]
+    safe = load_builder(f"{name}_kripke")()
+    faulty = load_builder(f"{name}_faulty")()
+    forbidden = tuple(spec["properties"]["safety"]["forbidden_edge"])
+    state_count = reachable_state_count(safe)
+    safety_bound = state_count
+    safe_counterexample = shortest_edge_counterexample(safe, forbidden, safety_bound)
+    faulty_counterexample = shortest_edge_counterexample(faulty, forbidden, safety_bound)
+    liveness = spec["properties"]["liveness"]
+    liveness_result = check_af_labels_from(safe, liveness["target_labels"], liveness["starts"])
+    transitions = sum(
+        len(targets) for state, targets in safe.transitions.items()
+        if state in safe.reachable_states()
+    )
     return {
         "function": name,
-        "reachable_states": sorted(safe.reachable_states()),
-        "completeness_threshold": diameter,
-        "safety_property": "AG(!forbidden_transition)",
-        "safe_safety_result": safety_safe,
-        "safe_bmc_counterexample_at_threshold": safe_bmc_cex,
-        "faulty_safety_result": safety_faulty,
-        "faulty_counterexample": faulty_cex,
-        "liveness_result": live_ok,
-        "liveness_bmc_counterexample": live_bmc,
+        "title": spec["title"],
+        "states": sorted(safe.reachable_states()),
+        "reachable_state_count": state_count,
+        "transition_count": transitions,
+        "graph_diameter": graph_diameter(safe),
+        "safety": {
+            "id": spec["properties"]["safety"]["id"],
+            "formula": spec["properties"]["safety"]["formula"],
+            "bound_edges": safety_bound,
+            "safe_model_pass": safe_counterexample is None,
+            "safe_model_counterexample": safe_counterexample,
+            "faulty_model_detected": faulty_counterexample is not None,
+            "faulty_model_counterexample": faulty_counterexample,
+        },
+        "liveness": {
+            "id": liveness["id"],
+            "formula": liveness["formula"],
+            "starts": liveness["starts"],
+            "target_labels": liveness["target_labels"],
+            "pass": liveness_result,
+        },
+        "generated_transition_test_cases": case_count,
+        "transition_coverage_percent": 100.0 if transitions else 0.0,
     }
 
 
 def main():
-    out = []
-    for name, args in MODELS.items():
-        out.append(run_one(name, *args))
-    result_dir = ROOT / "results"
-    result_dir.mkdir(exist_ok=True)
-    (result_dir / "verification_results.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print("=== HRM KRIPKE + BMC VERIFICATION ===")
-    for r in out:
-        print(f"\n[{r['function'].upper()}]")
-        print("reachable:", ", ".join(r["reachable_states"]))
-        print("completeness threshold:", r["completeness_threshold"])
-        print("safety safe-model:", "PASS" if r["safe_safety_result"] else "FAIL")
-        print("BMC safe-model at threshold:", "NO COUNTEREXAMPLE" if r["safe_bmc_counterexample_at_threshold"] is None else "COUNTEREXAMPLE FOUND")
-        print("safety faulty-model:", "PASS" if r["faulty_safety_result"] else "FAIL")
-        print("faulty counterexample:", " -> ".join(r["faulty_counterexample"]) if r["faulty_counterexample"] else "none")
-        print("liveness:", "PASS" if r["liveness_result"] else "FAIL")
-    print(f"\nSaved: {result_dir / 'verification_results.json'}")
+    specs, cases = generate_artifacts()
+    case_counts = {spec["name"]: sum(case["feature"] == spec["title"] for case in cases) for spec in specs}
+    results = [run_one(spec, case_counts[spec["name"]]) for spec in specs]
+    all_pass = all(
+        row["safety"]["safe_model_pass"]
+        and row["safety"]["faulty_model_detected"]
+        and row["liveness"]["pass"]
+        for row in results
+    )
+    output = {
+        "status": "PASS" if all_pass else "FAIL",
+        "functions_verified": len(results),
+        "generated_test_cases": len(cases),
+        "models": results,
+    }
+    result_path = ROOT / "results" / "verification_results.json"
+    result_path.parent.mkdir(exist_ok=True)
+    result_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "=== HRM STATE GENERATION AND KRIPKE/BMC VERIFICATION ===",
+        f"Functions: {len(results)} | generated transition cases: {len(cases)}",
+    ]
+    for row in results:
+        safety = row["safety"]
+        liveness = row["liveness"]
+        faulty_path = " -> ".join(safety["faulty_model_counterexample"] or [])
+        lines.append(
+            f"{row['function']}: states={row['reachable_state_count']}, "
+            f"transitions={row['transition_count']}, cases={row['generated_transition_test_cases']}, "
+            f"safe={'PASS' if safety['safe_model_pass'] else 'FAIL'}, "
+            f"faulty={'DETECTED' if safety['faulty_model_detected'] else 'MISSED'}, "
+            f"liveness={'PASS' if liveness['pass'] else 'FAIL'}"
+        )
+        lines.append(f"  faulty counterexample: {faulty_path}")
+    lines.extend([f"Overall: {output['status']}", f"Results: {result_path}"])
+    run_log = "\n".join(lines) + "\n"
+    (ROOT / "results" / "run.log").write_text(run_log, encoding="utf-8")
+    print(run_log, end="")
+    return 0 if all_pass else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

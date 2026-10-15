@@ -1,30 +1,27 @@
-"""Adapter that reuses softsec-toolkit/ch1_models/kripke.py."""
-from pathlib import Path
-import importlib.util
-import os
+class KripkeStructure:
+    def __init__(self):
+        self.initial = set()
+        self.labels = {}
+        self.transitions = {}
 
+    def add_state(self, state, labels=None, initial=False):
+        self.labels.setdefault(state, set()).update(labels or [])
+        self.transitions.setdefault(state, set())
+        if initial:
+            self.initial.add(state)
 
-def load_kripke_class():
-    candidates = []
-    env = os.environ.get("SOFTSEC_TOOLKIT")
-    if env:
-        candidates.append(Path(env) / "ch1_models" / "kripke.py")
-    here = Path(__file__).resolve()
-    candidates += [
-        here.parents[3] / "softsec-toolkit" / "ch1_models" / "kripke.py",
-        here.parents[4] / "softsec-toolkit" / "ch1_models" / "kripke.py",
-    ]
-    for p in candidates:
-        if p.exists():
-            spec = importlib.util.spec_from_file_location("softsec_toolkit_kripke", p)
-            mod = importlib.util.module_from_spec(spec)
-            assert spec.loader is not None
-            spec.loader.exec_module(mod)
-            return mod.KripkeStructure
-    raise FileNotFoundError(
-        "Khong tim thay softsec-toolkit/ch1_models/kripke.py. "
-        "Hay dat bien moi truong SOFTSEC_TOOLKIT tro toi thu muc softsec-toolkit."
-    )
+    def add_transition(self, source, target):
+        if source not in self.labels or target not in self.labels:
+            raise ValueError(f"Transition references unknown state: {source} -> {target}")
+        self.transitions[source].add(target)
 
-
-KripkeStructure = load_kripke_class()
+    def reachable_states(self):
+        reached = set()
+        pending = list(self.initial)
+        while pending:
+            state = pending.pop()
+            if state in reached:
+                continue
+            reached.add(state)
+            pending.extend(self.transitions.get(state, set()) - reached)
+        return reached

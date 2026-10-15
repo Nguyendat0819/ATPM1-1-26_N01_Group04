@@ -1,0 +1,26 @@
+{
+  "name": "attendance",
+  "title": "Chấm công",
+  "states": [
+    {"id": "READY", "labels": ["ready"], "initial": true},
+    {"id": "AUTHENTICATED", "labels": ["authenticated"]},
+    {"id": "CHECKIN_VALID", "labels": ["valid_checkin"]},
+    {"id": "CHECKED_IN", "labels": ["checked_in"]},
+    {"id": "CHECKED_OUT", "labels": ["checked_out"]},
+    {"id": "VERIFY_FAILED", "labels": ["verify_failed"]}
+  ],
+  "transitions": [
+    ["READY", "AUTHENTICATED"],
+    ["AUTHENTICATED", "VERIFY_FAILED"],
+    ["AUTHENTICATED", "CHECKIN_VALID"],
+    ["CHECKIN_VALID", "CHECKED_IN"],
+    ["VERIFY_FAILED", "READY"],
+    ["CHECKED_IN", "CHECKED_OUT"],
+    ["CHECKED_OUT", "READY"]
+  ],
+  "properties": {
+    "safety": {"id": "A1", "forbidden_edge": ["AUTHENTICATED", "CHECKED_OUT"], "formula": "AG(!checkout_without_checkin)", "description": "Không thể check-out trước khi check-in."},
+    "liveness": {"id": "A2", "starts": ["CHECKIN_VALID"], "target_labels": ["checked_in"], "formula": "AF(checked_in)", "description": "Dữ liệu check-in hợp lệ cuối cùng được ghi nhận là đã vào làm."}
+  },
+  "faulty_transition": ["AUTHENTICATED", "CHECKED_OUT"]
+}

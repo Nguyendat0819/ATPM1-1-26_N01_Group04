@@ -242,70 +242,112 @@ router.get("/", async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Lỗi server" }); }
 });
 
-// --- 7. ADMIN: Duyệt đơn (Giữ nguyên) ---
 router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status, rejection_reason } = req.body;
+  const token = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
+  if (!token) return res.status(401).json({ message: "Chưa đăng nhập!" });
+
+  let currentUser;
+  try {
+    currentUser = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ message: "Token không hợp lệ!" });
+  }
+
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    return res.status(400).json({ message: "ID đơn không hợp lệ!" });
+  }
+  if (status !== "APPROVED" && status !== "REJECTED") {
+    return res.status(400).json({ message: "Trạng thái không hợp lệ!" });
+  }
+  if (!["MANAGER", "SUPERADMIN", "ADMIN"].includes(currentUser.role)) {
+    return res.status(403).json({ message: "Bạn không có quyền duyệt đơn!" });
+  }
 
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Chưa đăng nhập!" });
-    const currentUser = jwt.verify(token, process.env.JWT_SECRET);
-
-    const leaveRes = await pool.query(`SELECT lr.*, u.full_name, u.department_id, u.role as target_role FROM leave_requests lr JOIN users u ON lr.user_id = u.id WHERE lr.id = $1`, [id]);
+    const leaveRes = await pool.query(
+      `SELECT lr.*, u.full_name, u.department_id, u.role as target_role
+       FROM leave_requests lr JOIN users u ON lr.user_id = u.id WHERE lr.id = $1`,
+      [id]
+    );
     if (leaveRes.rows.length === 0) return res.status(404).json({ message: "Không tìm thấy đơn!" });
     const data = leaveRes.rows[0];
 
+    if (Number(data.user_id) === Number(currentUser.id)) {
+      return res.status(403).json({ message: "Bạn không thể tự duyệt đơn!" });
+    }
     if (currentUser.role === "MANAGER") {
-      if (data.target_role === "MANAGER" || data.target_role === "SUPERADMIN") {
-        return res.status(403).json({ message: "Bạn không thể tự duyệt đơn hoặc duyệt cho cấp trên!" });
+      if (data.target_role !== "STAFF") {
+        return res.status(403).json({ message: "Bạn không có quyền duyệt đơn cấp này!" });
       }
       const getDept = await pool.query("SELECT department_id as id FROM users WHERE id = $1", [currentUser.id]);
-      if (getDept.rows.length === 0 || data.department_id !== getDept.rows[0].id) {
+      if (!getDept.rows[0]?.id || Number(data.department_id) !== Number(getDept.rows[0].id)) {
         return res.status(403).json({ message: "Bạn không có quyền duyệt đơn của nhân viên phòng khác!" });
       }
+    } else if (data.target_role !== "MANAGER") {
+      return res.status(403).json({ message: "Bạn không có quyền duyệt đơn cấp này!" });
     }
 
-    await pool.query("UPDATE leave_requests SET status = $1, approved_at = NOW(), rejection_reason = $2 WHERE id = $3", [status, rejection_reason || null, id]);
+    if (data.status !== "PENDING") {
+      return res.status(409).json({ message: "Đơn đã được xử lý!" });
+    }
 
-    await LeaveLog.create({
-      leave_request_id: id, user_id: data.user_id, action: status, performed_by: "ADMIN",
-      details: { full_name: data.full_name, reason_text: data.reason, start_date: data.start_date, end_date: data.end_date, total_days: data.total_days, old_status: "PENDING", new_status: status, rejection_reason: rejection_reason || null, status_at: new Date(), note: status === "APPROVED" ? "Sếp đã đồng ý duyệt đơn" : "Sếp đã từ chối đơn" },
-    });
+    const updated = await pool.query(
+      `UPDATE leave_requests
+       SET status = $1, approved_at = CASE WHEN $1 = 'APPROVED' THEN NOW() ELSE NULL END,
+           approver_id = $2, rejection_reason = $3
+       WHERE id = $4 AND status = 'PENDING' RETURNING id`,
+      [status, currentUser.id, status === "REJECTED" ? rejection_reason || null : null, id]
+    );
+    if (updated.rows.length === 0) {
+      return res.status(409).json({ message: "Đơn đã được xử lý!" });
+    }
 
-    // 🔥 Ghi vào bảng announcements để tạo thông báo hệ thống cho nhân viên (Để đọc được khi online lại)
     try {
-        const targetUserRes = await pool.query("SELECT email FROM users WHERE id = $1", [data.user_id]);
-        if (targetUserRes.rows.length > 0) {
-            const targetEmail = targetUserRes.rows[0].email;
-            const notiTitle = `Kết quả xét duyệt đơn nghỉ phép`;
-            let notiContent = `Đơn xin nghỉ phép của bạn (Lý do: ${data.reason}) từ ngày ${new Date(data.start_date).toLocaleDateString("vi-VN")} đến ${new Date(data.end_date).toLocaleDateString("vi-VN")} đã ${status === "APPROVED" ? "được DUYỆT ✅" : "bị TỪ CHỐI ❌"}.`;
-            
-            await pool.query(`
-                INSERT INTO announcements (title, content, sender_id, target_type, target_email)
-                VALUES ($1, $2, $3, 'INDIVIDUAL', $4)
-            `, [notiTitle, notiContent, currentUser.id, targetEmail]);
-
-            // Phát tín hiệu Real-time để quả chuông đỏ của Frontend cập nhật số lập tức
-            const io = req.app.get("socketio");
-            if (io) {
-                io.emit("new_announcement", { target_type: 'INDIVIDUAL', target_email: targetEmail });
-            }
-        }
-    } catch (err) {
-        console.error("Lỗi tạo thông báo kết quả duyệt đơn:", err);
-    }
-
-    const io = req.app.get("socketio");
-    if (io) {
-      io.emit("leave_status_update", {
-        target_user_id: data.user_id,
-        message: `📢 Đơn nghỉ phép "${data.reason}" của bạn đã ${status === "APPROVED" ? "được DUYỆT ✅" : "bị TỪ CHỐI ❌"}`,
-        status: status,
+      await LeaveLog.create({
+        leave_request_id: id, user_id: data.user_id, action: status, performed_by: currentUser.role,
+        details: { full_name: data.full_name, reason_text: data.reason, start_date: data.start_date, end_date: data.end_date, total_days: data.total_days, old_status: "PENDING", new_status: status, rejection_reason: rejection_reason || null, status_at: new Date(), note: status === "APPROVED" ? "Sếp đã đồng ý duyệt đơn" : "Sếp đã từ chối đơn" },
       });
+    } catch (err) {
+      console.error("Lỗi ghi log duyệt đơn:", err);
     }
-    res.json({ message: "Cập nhật trạng thái thành công" });
-  } catch (err) { res.status(500).json({ message: "Lỗi cập nhật trạng thái" }); }
+
+    try {
+      const targetUserRes = await pool.query("SELECT email FROM users WHERE id = $1", [data.user_id]);
+      if (targetUserRes.rows.length > 0) {
+        const targetEmail = targetUserRes.rows[0].email;
+        const notiTitle = "Kết quả xét duyệt đơn nghỉ phép";
+        const notiContent = `Đơn xin nghỉ phép của bạn (Lý do: ${data.reason}) từ ngày ${new Date(data.start_date).toLocaleDateString("vi-VN")} đến ${new Date(data.end_date).toLocaleDateString("vi-VN")} đã ${status === "APPROVED" ? "được DUYỆT ✅" : "bị TỪ CHỐI ❌"}.`;
+        await pool.query(
+          `INSERT INTO announcements (title, content, sender_id, target_type, target_email)
+           VALUES ($1, $2, $3, 'INDIVIDUAL', $4)`,
+          [notiTitle, notiContent, currentUser.id, targetEmail]
+        );
+        const io = req.app.get("socketio");
+        if (io) io.emit("new_announcement", { target_type: "INDIVIDUAL", target_email: targetEmail });
+      }
+    } catch (err) {
+      console.error("Lỗi tạo thông báo kết quả duyệt đơn:", err);
+    }
+
+    try {
+      const io = req.app.get("socketio");
+      if (io) {
+        io.emit("leave_status_update", {
+          target_user_id: data.user_id,
+          message: `📢 Đơn nghỉ phép "${data.reason}" của bạn đã ${status === "APPROVED" ? "được DUYỆT ✅" : "bị TỪ CHỐI ❌"}`,
+          status,
+        });
+      }
+    } catch (err) {
+      console.error("Lỗi phát thông báo duyệt đơn:", err);
+    }
+    return res.json({ message: "Cập nhật trạng thái thành công" });
+  } catch (err) {
+    console.error("Lỗi cập nhật trạng thái đơn:", err);
+    return res.status(500).json({ message: "Lỗi cập nhật trạng thái" });
+  }
 });
 
 // ============================================================================

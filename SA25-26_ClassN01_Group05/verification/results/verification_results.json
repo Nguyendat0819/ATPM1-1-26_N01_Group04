@@ -1,91 +1,169 @@
-[
-  {
-    "function": "login",
-    "reachable_states": [
-      "AUTHENTICATED",
-      "AUTHENTICATING_INVALID",
-      "AUTHENTICATING_VALID",
-      "INACTIVE_USER",
-      "LOGGED_OUT",
-      "LOGIN_FAILED",
-      "UNAUTHENTICATED"
-    ],
-    "completeness_threshold": 3,
-    "safety_property": "AG(!forbidden_transition)",
-    "safe_safety_result": true,
-    "safe_bmc_counterexample_at_threshold": null,
-    "faulty_safety_result": false,
-    "faulty_counterexample": [
-      "UNAUTHENTICATED",
-      "AUTHENTICATED"
-    ],
-    "liveness_result": true,
-    "liveness_bmc_counterexample": null
-  },
-  {
-    "function": "attendance",
-    "reachable_states": [
-      "AUTHENTICATED",
-      "CHECKED_IN",
-      "CHECKED_OUT",
-      "CHECKIN_VALID",
-      "READY",
-      "VERIFY_FAILED"
-    ],
-    "completeness_threshold": 4,
-    "safety_property": "AG(!forbidden_transition)",
-    "safe_safety_result": true,
-    "safe_bmc_counterexample_at_threshold": null,
-    "faulty_safety_result": false,
-    "faulty_counterexample": [
-      "READY",
-      "AUTHENTICATED",
-      "CHECKED_OUT"
-    ],
-    "liveness_result": true,
-    "liveness_bmc_counterexample": null
-  },
-  {
-    "function": "leave",
-    "reachable_states": [
-      "APPROVED",
-      "NO_REQUEST",
-      "PENDING",
-      "REJECTED"
-    ],
-    "completeness_threshold": 2,
-    "safety_property": "AG(!forbidden_transition)",
-    "safe_safety_result": true,
-    "safe_bmc_counterexample_at_threshold": null,
-    "faulty_safety_result": false,
-    "faulty_counterexample": [
-      "NO_REQUEST",
-      "APPROVED"
-    ],
-    "liveness_result": true,
-    "liveness_bmc_counterexample": null
-  },
-  {
-    "function": "payroll",
-    "reachable_states": [
-      "CALCULATING",
-      "DRAFT",
-      "NOT_CALCULATED",
-      "PAID"
-    ],
-    "completeness_threshold": 3,
-    "safety_property": "AG(!forbidden_transition)",
-    "safe_safety_result": true,
-    "safe_bmc_counterexample_at_threshold": null,
-    "faulty_safety_result": false,
-    "faulty_counterexample": [
-      "NOT_CALCULATED",
-      "CALCULATING",
-      "DRAFT",
-      "PAID",
-      "DRAFT"
-    ],
-    "liveness_result": true,
-    "liveness_bmc_counterexample": null
-  }
-]
+{
+  "status": "PASS",
+  "functions_verified": 4,
+  "generated_test_cases": 25,
+  "models": [
+    {
+      "function": "attendance",
+      "title": "Chấm công",
+      "states": [
+        "AUTHENTICATED",
+        "CHECKED_IN",
+        "CHECKED_OUT",
+        "CHECKIN_VALID",
+        "READY",
+        "VERIFY_FAILED"
+      ],
+      "reachable_state_count": 6,
+      "transition_count": 7,
+      "graph_diameter": 4,
+      "safety": {
+        "id": "A1",
+        "formula": "AG(!checkout_without_checkin)",
+        "bound_edges": 6,
+        "safe_model_pass": true,
+        "safe_model_counterexample": null,
+        "faulty_model_detected": true,
+        "faulty_model_counterexample": [
+          "READY",
+          "AUTHENTICATED",
+          "CHECKED_OUT"
+        ]
+      },
+      "liveness": {
+        "id": "A2",
+        "formula": "AF(checked_in)",
+        "starts": [
+          "CHECKIN_VALID"
+        ],
+        "target_labels": [
+          "checked_in"
+        ],
+        "pass": true
+      },
+      "generated_transition_test_cases": 7,
+      "transition_coverage_percent": 100.0
+    },
+    {
+      "function": "leave",
+      "title": "Duyệt đơn nghỉ phép",
+      "states": [
+        "APPROVED",
+        "NO_REQUEST",
+        "PENDING",
+        "REJECTED"
+      ],
+      "reachable_state_count": 4,
+      "transition_count": 5,
+      "graph_diameter": 2,
+      "safety": {
+        "id": "LV1",
+        "formula": "AG(!approved_without_pending)",
+        "bound_edges": 4,
+        "safe_model_pass": true,
+        "safe_model_counterexample": null,
+        "faulty_model_detected": true,
+        "faulty_model_counterexample": [
+          "NO_REQUEST",
+          "APPROVED"
+        ]
+      },
+      "liveness": {
+        "id": "LV2",
+        "formula": "AF(approved OR rejected)",
+        "starts": [
+          "PENDING"
+        ],
+        "target_labels": [
+          "approved",
+          "rejected"
+        ],
+        "pass": true
+      },
+      "generated_transition_test_cases": 5,
+      "transition_coverage_percent": 100.0
+    },
+    {
+      "function": "login",
+      "title": "Xác thực đăng nhập",
+      "states": [
+        "AUTHENTICATED",
+        "AUTHENTICATING_INVALID",
+        "AUTHENTICATING_VALID",
+        "INACTIVE_USER",
+        "LOGGED_OUT",
+        "LOGIN_FAILED",
+        "UNAUTHENTICATED"
+      ],
+      "reachable_state_count": 7,
+      "transition_count": 9,
+      "graph_diameter": 3,
+      "safety": {
+        "id": "L1",
+        "formula": "AG(!bypass_authentication)",
+        "bound_edges": 7,
+        "safe_model_pass": true,
+        "safe_model_counterexample": null,
+        "faulty_model_detected": true,
+        "faulty_model_counterexample": [
+          "UNAUTHENTICATED",
+          "AUTHENTICATED"
+        ]
+      },
+      "liveness": {
+        "id": "L2",
+        "formula": "AF(authenticated)",
+        "starts": [
+          "AUTHENTICATING_VALID"
+        ],
+        "target_labels": [
+          "authenticated"
+        ],
+        "pass": true
+      },
+      "generated_transition_test_cases": 9,
+      "transition_coverage_percent": 100.0
+    },
+    {
+      "function": "payroll",
+      "title": "Tính và thanh toán lương",
+      "states": [
+        "CALCULATING",
+        "DRAFT",
+        "NOT_CALCULATED",
+        "PAID"
+      ],
+      "reachable_state_count": 4,
+      "transition_count": 4,
+      "graph_diameter": 3,
+      "safety": {
+        "id": "P1",
+        "formula": "AG(!paid_to_draft)",
+        "bound_edges": 4,
+        "safe_model_pass": true,
+        "safe_model_counterexample": null,
+        "faulty_model_detected": true,
+        "faulty_model_counterexample": [
+          "NOT_CALCULATED",
+          "CALCULATING",
+          "DRAFT",
+          "PAID",
+          "DRAFT"
+        ]
+      },
+      "liveness": {
+        "id": "P2",
+        "formula": "AF(draft)",
+        "starts": [
+          "NOT_CALCULATED"
+        ],
+        "target_labels": [
+          "draft"
+        ],
+        "pass": true
+      },
+      "generated_transition_test_cases": 4,
+      "transition_coverage_percent": 100.0
+    }
+  ]
+}
