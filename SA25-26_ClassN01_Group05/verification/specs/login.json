@@ -1,29 +1,38 @@
 {
   "name": "login",
   "title": "Xác thực đăng nhập",
+  "implementation_source": "auth_service/routes/auth.js",
   "states": [
     {"id": "UNAUTHENTICATED", "labels": ["unauthenticated", "credentials_not_verified"], "initial": true},
-    {"id": "AUTHENTICATING_VALID", "labels": ["authenticating", "valid_credentials"]},
+    {"id": "AUTHENTICATING_ACTIVE", "labels": ["authenticating", "valid_credentials", "active_user"]},
     {"id": "AUTHENTICATING_INVALID", "labels": ["authenticating", "invalid_credentials"]},
+    {"id": "AUTHENTICATING_INACTIVE", "labels": ["authenticating", "valid_credentials", "inactive_user"]},
     {"id": "LOGIN_FAILED", "labels": ["login_failed"]},
     {"id": "INACTIVE_USER", "labels": ["inactive_user"]},
     {"id": "AUTHENTICATED", "labels": ["authenticated", "credentials_verified"]},
     {"id": "LOGGED_OUT", "labels": ["logged_out", "credentials_not_verified"]}
   ],
   "transitions": [
-    ["UNAUTHENTICATED", "AUTHENTICATING_VALID"],
+    ["UNAUTHENTICATED", "AUTHENTICATING_ACTIVE"],
     ["UNAUTHENTICATED", "AUTHENTICATING_INVALID"],
-    ["AUTHENTICATING_VALID", "AUTHENTICATED"],
+    ["UNAUTHENTICATED", "AUTHENTICATING_INACTIVE"],
+    ["AUTHENTICATING_ACTIVE", "AUTHENTICATED"],
     ["AUTHENTICATING_INVALID", "LOGIN_FAILED"],
-    ["AUTHENTICATING_INVALID", "INACTIVE_USER"],
+    ["AUTHENTICATING_INACTIVE", "INACTIVE_USER"],
     ["LOGIN_FAILED", "UNAUTHENTICATED"],
     ["INACTIVE_USER", "UNAUTHENTICATED"],
     ["AUTHENTICATED", "LOGGED_OUT"],
     ["LOGGED_OUT", "UNAUTHENTICATED"]
   ],
   "properties": {
-    "safety": {"id": "L1", "forbidden_edge": ["UNAUTHENTICATED", "AUTHENTICATED"], "formula": "AG(!bypass_authentication)", "description": "Không thể đăng nhập thành công nếu chưa xác thực thông tin hợp lệ."},
-    "liveness": {"id": "L2", "starts": ["AUTHENTICATING_VALID"], "target_labels": ["authenticated"], "formula": "AF(authenticated)", "description": "Thông tin đăng nhập hợp lệ cuối cùng dẫn tới trạng thái đã xác thực."}
+    "safety": {
+      "id": "L1",
+      "forbidden_edge": ["UNAUTHENTICATED", "AUTHENTICATED"],
+      "allowed_predecessors": {"AUTHENTICATED": ["AUTHENTICATING_ACTIVE"]},
+      "formula": "forall s in S: R(s, AUTHENTICATED) implies s == AUTHENTICATING_ACTIVE",
+      "description": "Trạng thái đăng nhập thành công chỉ đến từ thông tin hợp lệ đã xác thực."
+    },
+    "liveness": {"id": "L2", "starts": ["AUTHENTICATING_ACTIVE"], "target_labels": ["authenticated"], "formula": "AF(authenticated)", "description": "Thông tin hợp lệ của tài khoản đang hoạt động cuối cùng dẫn tới trạng thái đã xác thực."}
   },
   "faulty_transition": ["UNAUTHENTICATED", "AUTHENTICATED"]
 }

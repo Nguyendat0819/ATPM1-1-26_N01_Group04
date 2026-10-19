@@ -1,6 +1,7 @@
 {
   "name": "payroll",
   "title": "Tính và thanh toán lương",
+  "implementation_source": "salary_service/routes/payroll.js",
   "states": [
     {"id": "NOT_CALCULATED", "labels": ["not_calculated", "valid_payroll_input"], "initial": true},
     {"id": "CALCULATING", "labels": ["calculating"]},
@@ -14,7 +15,13 @@
     ["PAID", "PAID"]
   ],
   "properties": {
-    "safety": {"id": "P1", "forbidden_edge": ["PAID", "DRAFT"], "formula": "AG(!paid_to_draft)", "description": "Bảng lương đã thanh toán không quay lại bản nháp."},
+    "safety": {
+      "id": "P1",
+      "forbidden_edge": ["PAID", "DRAFT"],
+      "allowed_predecessors": {"CALCULATING": ["NOT_CALCULATED"], "DRAFT": ["CALCULATING"], "PAID": ["DRAFT", "PAID"]},
+      "formula": "forall s in S: (R(s, CALCULATING) implies s == NOT_CALCULATED) and (R(s, DRAFT) implies s == CALCULATING) and (R(s, PAID) implies s in {DRAFT, PAID})",
+      "description": "Tính lương theo thứ tự NOT_CALCULATED → CALCULATING → DRAFT → PAID; PAID giữ nguyên."
+    },
     "liveness": {"id": "P2", "starts": ["NOT_CALCULATED"], "target_labels": ["draft"], "formula": "AF(draft)", "description": "Dữ liệu lương hợp lệ cuối cùng tạo được bảng lương nháp."}
   },
   "faulty_transition": ["PAID", "DRAFT"]

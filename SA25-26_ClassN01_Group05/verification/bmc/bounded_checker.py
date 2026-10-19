@@ -19,6 +19,18 @@ def shortest_edge_counterexample(model, forbidden_edge, bound=None):
     return None
 
 
+def shortest_forbidden_edge_counterexample(model, forbidden_edges, bound=None):
+    candidates = []
+    for edge in forbidden_edges:
+        path = shortest_edge_counterexample(model, edge, bound)
+        if path is not None:
+            candidates.append((len(path), tuple(edge), path))
+    if not candidates:
+        return None
+    _, edge, path = min(candidates, key=lambda item: (item[0], item[1]))
+    return {"edge": list(edge), "path": path}
+
+
 def reachable_state_count(model):
     return len(model.reachable_states())
 

@@ -1,12 +1,12 @@
 === HRM STATE GENERATION AND KRIPKE/BMC VERIFICATION ===
-Functions: 4 | generated transition cases: 25
-attendance: states=6, transitions=7, cases=7, safe=PASS, faulty=DETECTED, liveness=PASS
-  faulty counterexample: READY -> AUTHENTICATED -> CHECKED_OUT
-leave: states=4, transitions=5, cases=5, safe=PASS, faulty=DETECTED, liveness=PASS
-  faulty counterexample: NO_REQUEST -> APPROVED
-login: states=7, transitions=9, cases=9, safe=PASS, faulty=DETECTED, liveness=PASS
-  faulty counterexample: UNAUTHENTICATED -> AUTHENTICATED
-payroll: states=4, transitions=4, cases=4, safe=PASS, faulty=DETECTED, liveness=PASS
-  faulty counterexample: NOT_CALCULATED -> CALCULATING -> DRAFT -> PAID -> DRAFT
+Functions: 4 | generated static cases: 34
+attendance: states=6, transitions=7, cases=9 (transition=7, safety=1, liveness=1), safe=PASS, faulty=DETECTED, liveness=PASS
+  faulty counterexample: READY -> AUTHENTICATED -> CHECKED_OUT (violating edge: AUTHENTICATED -> CHECKED_OUT)
+leave: states=4, transitions=5, cases=7 (transition=5, safety=1, liveness=1), safe=PASS, faulty=DETECTED, liveness=PASS
+  faulty counterexample: NO_REQUEST -> APPROVED (violating edge: NO_REQUEST -> APPROVED)
+login: states=8, transitions=10, cases=12 (transition=10, safety=1, liveness=1), safe=PASS, faulty=DETECTED, liveness=PASS
+  faulty counterexample: UNAUTHENTICATED -> AUTHENTICATED (violating edge: UNAUTHENTICATED -> AUTHENTICATED)
+payroll: states=4, transitions=4, cases=6 (transition=4, safety=1, liveness=1), safe=PASS, faulty=DETECTED, liveness=PASS
+  faulty counterexample: NOT_CALCULATED -> CALCULATING -> DRAFT -> PAID -> DRAFT (violating edge: PAID -> DRAFT)
 Overall: PASS
 Results: /home/ubuntu01/Desktop/Code/ATPM1-1-26_N01_Group04/SA25-26_ClassN01_Group05/verification/results/verification_results.json
