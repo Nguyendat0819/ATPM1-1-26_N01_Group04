@@ -1,18 +1,33 @@
 from pathlib import Path
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bmc"))
-from bounded_checker import check_ag_not_label, check_af_label, check_ef_label, graph_diameter, shortest_bad_path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT), str(ROOT / "bmc")]
+from bounded_checker import (
+    check_af_labels_from,
+    graph_diameter,
+    reachable_state_count,
+    shortest_forbidden_edge_counterexample,
+)
+from generate_artifacts import forbidden_edges_for_spec
 
 
-def run_suite(name, model, safety_label, liveness_label):
+def run_suite(spec, model):
+    safety = spec["properties"]["safety"]
+    liveness = spec["properties"]["liveness"]
+    bound = reachable_state_count(model)
+    counterexample = shortest_forbidden_edge_counterexample(
+        model, forbidden_edges_for_spec(spec), bound
+    )
     result = {
-        "model": name,
+        "model": spec["name"],
         "reachable": sorted(model.reachable_states()),
-        "diameter": graph_diameter(model),
-        "safety": check_ag_not_label(model, safety_label),
-        "safety_counterexample": shortest_bad_path(model, lambda s: safety_label in model.labels.get(s, set())),
-        "liveness": check_af_label(model, liveness_label),
-        "liveness_target": liveness_label,
-        "existential_target": check_ef_label(model, liveness_label),
+        "completeness_bound": bound,
+        "graph_diameter": graph_diameter(model),
+        "safety_property": safety["id"],
+        "safety": counterexample is None,
+        "safety_counterexample": counterexample,
+        "liveness_property": liveness["id"],
+        "liveness": check_af_labels_from(model, liveness["target_labels"], liveness["starts"]),
+        "liveness_targets": liveness["target_labels"],
     }
     return result

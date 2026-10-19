@@ -1,4 +1,4 @@
 PROPERTIES = [
-    ("P1", "Safety", "AG(!paid_to_draft)", "A PAID payroll cannot return to DRAFT."),
-    ("P2", "Liveness", "AF(draft)", "Valid payroll data eventually reaches DRAFT."),
+    ("P1", "Safety", "forall s: R(s, CALCULATING) -> s == NOT_CALCULATED and R(s, DRAFT) -> s == CALCULATING and R(s, PAID) -> s in {DRAFT, PAID}", "Các trạng thái tính lương chỉ được đi theo thứ tự hợp lệ; PAID không quay về DRAFT."),
+    ("P2", "Liveness", "AF(draft)", "Từ NOT_CALCULATED, mọi nhánh cuối cùng đạt DRAFT."),
 ]

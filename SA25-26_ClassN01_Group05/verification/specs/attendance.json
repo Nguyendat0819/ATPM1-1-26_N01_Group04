@@ -1,6 +1,7 @@
 {
   "name": "attendance",
   "title": "Chấm công",
+  "implementation_source": "attendance_service/routes/attendance.js",
   "states": [
     {"id": "READY", "labels": ["ready"], "initial": true},
     {"id": "AUTHENTICATED", "labels": ["authenticated"]},
@@ -19,7 +20,13 @@
     ["CHECKED_OUT", "READY"]
   ],
   "properties": {
-    "safety": {"id": "A1", "forbidden_edge": ["AUTHENTICATED", "CHECKED_OUT"], "formula": "AG(!checkout_without_checkin)", "description": "Không thể check-out trước khi check-in."},
+    "safety": {
+      "id": "A1",
+      "forbidden_edge": ["AUTHENTICATED", "CHECKED_OUT"],
+      "allowed_predecessors": {"CHECKED_IN": ["CHECKIN_VALID"], "CHECKED_OUT": ["CHECKED_IN"]},
+      "formula": "forall s in S: (R(s, CHECKED_IN) implies s == CHECKIN_VALID) and (R(s, CHECKED_OUT) implies s == CHECKED_IN)",
+      "description": "Check-in chỉ sau xác thực dữ liệu; check-out chỉ sau CHECKED_IN."
+    },
     "liveness": {"id": "A2", "starts": ["CHECKIN_VALID"], "target_labels": ["checked_in"], "formula": "AF(checked_in)", "description": "Dữ liệu check-in hợp lệ cuối cùng được ghi nhận là đã vào làm."}
   },
   "faulty_transition": ["AUTHENTICATED", "CHECKED_OUT"]

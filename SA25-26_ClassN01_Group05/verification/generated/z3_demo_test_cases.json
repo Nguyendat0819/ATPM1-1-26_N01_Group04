@@ -1,0 +1,741 @@
+[
+  {
+    "id": "GEN-ATTENDANCE-01",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "READY",
+      "AUTHENTICATED"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach AUTHENTICATED through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-02",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATED",
+      "VERIFY_FAILED"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "VERIFY_FAILED"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> VERIFY_FAILED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach VERIFY_FAILED through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-03",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATED",
+      "CHECKIN_VALID"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKIN_VALID"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> CHECKIN_VALID"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach CHECKIN_VALID through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-04",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "CHECKIN_VALID",
+      "CHECKED_IN"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKIN_VALID",
+      "CHECKED_IN"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> CHECKIN_VALID",
+      "CHECKIN_VALID -> CHECKED_IN"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach CHECKED_IN through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-05",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "VERIFY_FAILED",
+      "READY"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "VERIFY_FAILED",
+      "READY"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> VERIFY_FAILED",
+      "VERIFY_FAILED -> READY"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach READY through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-06",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "CHECKED_IN",
+      "CHECKED_OUT"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKIN_VALID",
+      "CHECKED_IN",
+      "CHECKED_OUT"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> CHECKIN_VALID",
+      "CHECKIN_VALID -> CHECKED_IN",
+      "CHECKED_IN -> CHECKED_OUT"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach CHECKED_OUT through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-07",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "transition",
+    "transition": [
+      "CHECKED_OUT",
+      "READY"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKIN_VALID",
+      "CHECKED_IN",
+      "CHECKED_OUT",
+      "READY"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> CHECKIN_VALID",
+      "CHECKIN_VALID -> CHECKED_IN",
+      "CHECKED_IN -> CHECKED_OUT",
+      "CHECKED_OUT -> READY"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach READY through the declared transition."
+  },
+  {
+    "id": "GEN-ATTENDANCE-SAFETY-01",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "safety_constraint",
+    "property_id": "A1",
+    "transition": [
+      "AUTHENTICATED",
+      "CHECKED_OUT"
+    ],
+    "state_path": [
+      "READY",
+      "AUTHENTICATED",
+      "CHECKED_OUT"
+    ],
+    "steps": [
+      "READY -> AUTHENTICATED",
+      "AUTHENTICATED -> CHECKED_OUT"
+    ],
+    "expected_result": "rejected",
+    "expected": "Reject AUTHENTICATED -> CHECKED_OUT; it violates A1."
+  },
+  {
+    "id": "GEN-ATTENDANCE-LIVENESS-01",
+    "feature": "Chấm công",
+    "implementation_source": "attendance_service/routes/attendance.js",
+    "coverage": "liveness_witness",
+    "property_id": "A2",
+    "start_state": "CHECKIN_VALID",
+    "target_labels": [
+      "checked_in"
+    ],
+    "state_path": [
+      "CHECKIN_VALID",
+      "CHECKED_IN"
+    ],
+    "steps": [
+      "CHECKIN_VALID -> CHECKED_IN"
+    ],
+    "expected_result": "eventually_reaches_target",
+    "expected": "Reach a state labelled with checked_in."
+  },
+  {
+    "id": "GEN-LEAVE-01",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "transition",
+    "transition": [
+      "NO_REQUEST",
+      "PENDING"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "PENDING"
+    ],
+    "steps": [
+      "NO_REQUEST -> PENDING"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach PENDING through the declared transition."
+  },
+  {
+    "id": "GEN-LEAVE-02",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "transition",
+    "transition": [
+      "PENDING",
+      "APPROVED"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "PENDING",
+      "APPROVED"
+    ],
+    "steps": [
+      "NO_REQUEST -> PENDING",
+      "PENDING -> APPROVED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach APPROVED through the declared transition."
+  },
+  {
+    "id": "GEN-LEAVE-03",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "transition",
+    "transition": [
+      "PENDING",
+      "REJECTED"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "PENDING",
+      "REJECTED"
+    ],
+    "steps": [
+      "NO_REQUEST -> PENDING",
+      "PENDING -> REJECTED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach REJECTED through the declared transition."
+  },
+  {
+    "id": "GEN-LEAVE-04",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "transition",
+    "transition": [
+      "APPROVED",
+      "NO_REQUEST"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "PENDING",
+      "APPROVED",
+      "NO_REQUEST"
+    ],
+    "steps": [
+      "NO_REQUEST -> PENDING",
+      "PENDING -> APPROVED",
+      "APPROVED -> NO_REQUEST"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach NO_REQUEST through the declared transition."
+  },
+  {
+    "id": "GEN-LEAVE-05",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "transition",
+    "transition": [
+      "REJECTED",
+      "NO_REQUEST"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "PENDING",
+      "REJECTED",
+      "NO_REQUEST"
+    ],
+    "steps": [
+      "NO_REQUEST -> PENDING",
+      "PENDING -> REJECTED",
+      "REJECTED -> NO_REQUEST"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach NO_REQUEST through the declared transition."
+  },
+  {
+    "id": "GEN-LEAVE-SAFETY-01",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "safety_constraint",
+    "property_id": "LV1",
+    "transition": [
+      "NO_REQUEST",
+      "APPROVED"
+    ],
+    "state_path": [
+      "NO_REQUEST",
+      "APPROVED"
+    ],
+    "steps": [
+      "NO_REQUEST -> APPROVED"
+    ],
+    "expected_result": "rejected",
+    "expected": "Reject NO_REQUEST -> APPROVED; it violates LV1."
+  },
+  {
+    "id": "GEN-LEAVE-LIVENESS-01",
+    "feature": "Duyệt đơn nghỉ phép",
+    "implementation_source": "leave_service/routes/leaves.js",
+    "coverage": "liveness_witness",
+    "property_id": "LV2",
+    "start_state": "PENDING",
+    "target_labels": [
+      "approved",
+      "rejected"
+    ],
+    "state_path": [
+      "PENDING",
+      "APPROVED"
+    ],
+    "steps": [
+      "PENDING -> APPROVED"
+    ],
+    "expected_result": "eventually_reaches_target",
+    "expected": "Reach a state labelled with approved, rejected."
+  },
+  {
+    "id": "GEN-LOGIN-01",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_ACTIVE"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_ACTIVE"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_ACTIVE"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach AUTHENTICATING_ACTIVE through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-02",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INVALID"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INVALID"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INVALID"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach AUTHENTICATING_INVALID through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-03",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INACTIVE"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INACTIVE"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INACTIVE"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach AUTHENTICATING_INACTIVE through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-04",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATING_ACTIVE",
+      "AUTHENTICATED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_ACTIVE",
+      "AUTHENTICATED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_ACTIVE",
+      "AUTHENTICATING_ACTIVE -> AUTHENTICATED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach AUTHENTICATED through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-05",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATING_INVALID",
+      "LOGIN_FAILED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INVALID",
+      "LOGIN_FAILED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INVALID",
+      "AUTHENTICATING_INVALID -> LOGIN_FAILED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach LOGIN_FAILED through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-06",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATING_INACTIVE",
+      "INACTIVE_USER"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INACTIVE",
+      "INACTIVE_USER"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INACTIVE",
+      "AUTHENTICATING_INACTIVE -> INACTIVE_USER"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach INACTIVE_USER through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-07",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "LOGIN_FAILED",
+      "UNAUTHENTICATED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INVALID",
+      "LOGIN_FAILED",
+      "UNAUTHENTICATED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INVALID",
+      "AUTHENTICATING_INVALID -> LOGIN_FAILED",
+      "LOGIN_FAILED -> UNAUTHENTICATED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach UNAUTHENTICATED through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-08",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "INACTIVE_USER",
+      "UNAUTHENTICATED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_INACTIVE",
+      "INACTIVE_USER",
+      "UNAUTHENTICATED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_INACTIVE",
+      "AUTHENTICATING_INACTIVE -> INACTIVE_USER",
+      "INACTIVE_USER -> UNAUTHENTICATED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach UNAUTHENTICATED through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-09",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "AUTHENTICATED",
+      "LOGGED_OUT"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_ACTIVE",
+      "AUTHENTICATED",
+      "LOGGED_OUT"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_ACTIVE",
+      "AUTHENTICATING_ACTIVE -> AUTHENTICATED",
+      "AUTHENTICATED -> LOGGED_OUT"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach LOGGED_OUT through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-10",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "transition",
+    "transition": [
+      "LOGGED_OUT",
+      "UNAUTHENTICATED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATING_ACTIVE",
+      "AUTHENTICATED",
+      "LOGGED_OUT",
+      "UNAUTHENTICATED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATING_ACTIVE",
+      "AUTHENTICATING_ACTIVE -> AUTHENTICATED",
+      "AUTHENTICATED -> LOGGED_OUT",
+      "LOGGED_OUT -> UNAUTHENTICATED"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach UNAUTHENTICATED through the declared transition."
+  },
+  {
+    "id": "GEN-LOGIN-SAFETY-01",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "safety_constraint",
+    "property_id": "L1",
+    "transition": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATED"
+    ],
+    "state_path": [
+      "UNAUTHENTICATED",
+      "AUTHENTICATED"
+    ],
+    "steps": [
+      "UNAUTHENTICATED -> AUTHENTICATED"
+    ],
+    "expected_result": "rejected",
+    "expected": "Reject UNAUTHENTICATED -> AUTHENTICATED; it violates L1."
+  },
+  {
+    "id": "GEN-LOGIN-LIVENESS-01",
+    "feature": "Xác thực đăng nhập",
+    "implementation_source": "auth_service/routes/auth.js",
+    "coverage": "liveness_witness",
+    "property_id": "L2",
+    "start_state": "AUTHENTICATING_ACTIVE",
+    "target_labels": [
+      "authenticated"
+    ],
+    "state_path": [
+      "AUTHENTICATING_ACTIVE",
+      "AUTHENTICATED"
+    ],
+    "steps": [
+      "AUTHENTICATING_ACTIVE -> AUTHENTICATED"
+    ],
+    "expected_result": "eventually_reaches_target",
+    "expected": "Reach a state labelled with authenticated."
+  },
+  {
+    "id": "GEN-PAYROLL-01",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "transition",
+    "transition": [
+      "NOT_CALCULATED",
+      "CALCULATING"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach CALCULATING through the declared transition."
+  },
+  {
+    "id": "GEN-PAYROLL-02",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "transition",
+    "transition": [
+      "CALCULATING",
+      "DRAFT"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING",
+      "CALCULATING -> DRAFT"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach DRAFT through the declared transition."
+  },
+  {
+    "id": "GEN-PAYROLL-03",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "transition",
+    "transition": [
+      "DRAFT",
+      "PAID"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT",
+      "PAID"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING",
+      "CALCULATING -> DRAFT",
+      "DRAFT -> PAID"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach PAID through the declared transition."
+  },
+  {
+    "id": "GEN-PAYROLL-04",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "transition",
+    "transition": [
+      "PAID",
+      "PAID"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT",
+      "PAID",
+      "PAID"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING",
+      "CALCULATING -> DRAFT",
+      "DRAFT -> PAID",
+      "PAID -> PAID"
+    ],
+    "expected_result": "accepted",
+    "expected": "Reach PAID through the declared transition."
+  },
+  {
+    "id": "GEN-PAYROLL-SAFETY-01",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "safety_constraint",
+    "property_id": "P1",
+    "transition": [
+      "PAID",
+      "DRAFT"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT",
+      "PAID",
+      "DRAFT"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING",
+      "CALCULATING -> DRAFT",
+      "DRAFT -> PAID",
+      "PAID -> DRAFT"
+    ],
+    "expected_result": "rejected",
+    "expected": "Reject PAID -> DRAFT; it violates P1."
+  },
+  {
+    "id": "GEN-PAYROLL-LIVENESS-01",
+    "feature": "Tính và thanh toán lương",
+    "implementation_source": "salary_service/routes/payroll.js",
+    "coverage": "liveness_witness",
+    "property_id": "P2",
+    "start_state": "NOT_CALCULATED",
+    "target_labels": [
+      "draft"
+    ],
+    "state_path": [
+      "NOT_CALCULATED",
+      "CALCULATING",
+      "DRAFT"
+    ],
+    "steps": [
+      "NOT_CALCULATED -> CALCULATING",
+      "CALCULATING -> DRAFT"
+    ],
+    "expected_result": "eventually_reaches_target",
+    "expected": "Reach a state labelled with draft."
+  }
+]
