@@ -48,12 +48,12 @@ Với Safety, `UNSAT` nghĩa là không có trace đi qua cạnh cấm trong com
 
 Đã sinh 34 test case tĩnh từ cả bốn mô hình: phủ 26/26 transition, 4 ca kiểm tra cạnh Safety bị từ chối và 4 witness path cho Liveness. Danh sách nằm tại `generated/test_cases.json` và được lưu cùng lần chạy Z3 tại `generated/z3_demo_test_cases.json`.
 
-Memory smoke test lặp 20 lần, số đo ghi tại `results/z3_bmc_memory.log` và `.json`:
+Memory smoke test lặp 20 lần, số đo ghi tại `results/z3_bmc_memory.log` và `.json`. Lần đo mới nhất trong báo cáo: 2026-10-19 15:53:52 UTC:
 
-- Thời gian: 7.97 giây; CPU user/system: 7.94/0.06 giây.
-- RSS tiến trình: 28,580 KiB lúc đầu, đỉnh 78,356 KiB, 70,068 KiB lúc cuối.
-- Python heap `tracemalloc`: đỉnh 55,330 byte. RSS lớn hơn do tính cả bộ nhớ native của Z3.
-- RAM hệ thống khả dụng: 7,080,512 KiB lúc đầu và 7,050,020 KiB lúc cuối; giá trị thay đổi theo hoạt động hệ thống.
+- Thời gian: 8.03 giây; CPU user/system: 7.94/0.08 giây.
+- RSS tiến trình: 28,652 KiB lúc đầu, đỉnh 78,424 KiB, 70,108 KiB lúc cuối.
+- Python heap `tracemalloc`: đỉnh 55,153 byte. RSS lớn hơn do tính cả bộ nhớ native của Z3.
+- RAM hệ thống khả dụng: 6,969,464 KiB lúc đầu và 6,893,580 KiB lúc cuối; giá trị thay đổi theo hoạt động hệ thống.
 
 Đây là phép đo smoke/stress lặp, ghi nhận RAM và thời gian trên máy chạy test. Nó không đặt ngưỡng phần cứng cố định và không chứng minh không rò rỉ bộ nhớ.
 

@@ -8,10 +8,10 @@ login: states=8, transitions=10, bound=8, safe=UNSAT, faulty=SAT, liveness-count
   faulty counterexample: UNAUTHENTICATED -> AUTHENTICATED
 payroll: states=4, transitions=4, bound=4, safe=UNSAT, faulty=SAT, liveness-counterexample=UNSAT, result=PASS
   faulty counterexample: NOT_CALCULATED -> CALCULATING -> DRAFT -> PAID -> DRAFT
-RAM: RSS before/after/peak=28652/70108/78424 KiB; Python heap current/peak=16124/55153 bytes
-System MemAvailable before/after=6969464/6893580 KiB
-RSS samples per repeat: [61804, 61816, 70092, 78412, 61908, 70100, 70100, 70100, 78412, 61912, 70104, 78424, 61916, 70108, 70108, 70108, 70108, 70108, 70108, 70108] KiB
-Time: 8.028457s | CPU user/system=7.944989/0.084162s
+RAM: RSS before/after/peak=28728/70200/78508 KiB; Python heap current/peak=16242/55271 bytes
+System MemAvailable before/after=6704764/6678352 KiB
+RSS samples per repeat: [61896, 61908, 70184, 70184, 70184, 78504, 61996, 70188, 78508, 62000, 70192, 70192, 70192, 70192, 70200, 70200, 70200, 70200, 70200, 70200] KiB
+Time: 6.918555s | CPU user/system=6.878793/0.072237s
 Overall: PASS
 Results: /home/ubuntu01/Desktop/Code/ATPM1-1-26_N01_Group04/SA25-26_ClassN01_Group05/verification/results/z3_bmc_memory.json
 Generated cases: /home/ubuntu01/Desktop/Code/ATPM1-1-26_N01_Group04/SA25-26_ClassN01_Group05/verification/generated/z3_demo_test_cases.json
