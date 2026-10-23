@@ -1,0 +1,15 @@
+groups:
+  - name: hr_system_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dịch vụ {{ $labels.job }} đang bị sập!"
+          description: "Service {{ $labels.instance }} thuộc môi trường {{ $labels.env }} không phản hồi trong hơn 1 phút."
+
+      - alert: HighCpuUsage
+        expr: node_cpu_seconds_total / count(node_cpu_seconds_total) > 0.8
+        for: 5m

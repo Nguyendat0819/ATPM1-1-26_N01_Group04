@@ -1,0 +1,388 @@
+{
+  "status": "PASS",
+  "timestamp_utc": "2026-10-23T00:18:37.969879+00:00",
+  "z3_version": "5.3.1",
+  "bmc_method": "bounded transition unrolling; query whether any forbidden edge is traversed",
+  "functions": [
+    {
+      "function": "attendance",
+      "title": "Chấm công",
+      "spec_sha256": "e1fdeed5fbf17af1239ab05a123ce1cf606515a9507302cad09245a382acae2d",
+      "reachable_states": 6,
+      "transition_count": 7,
+      "forbidden_edges": [
+        [
+          "AUTHENTICATED",
+          "CHECKED_IN"
+        ],
+        [
+          "CHECKED_IN",
+          "CHECKED_IN"
+        ],
+        [
+          "CHECKED_OUT",
+          "CHECKED_IN"
+        ],
+        [
+          "READY",
+          "CHECKED_IN"
+        ],
+        [
+          "VERIFY_FAILED",
+          "CHECKED_IN"
+        ],
+        [
+          "AUTHENTICATED",
+          "CHECKED_OUT"
+        ],
+        [
+          "CHECKED_OUT",
+          "CHECKED_OUT"
+        ],
+        [
+          "CHECKIN_VALID",
+          "CHECKED_OUT"
+        ],
+        [
+          "READY",
+          "CHECKED_OUT"
+        ],
+        [
+          "VERIFY_FAILED",
+          "CHECKED_OUT"
+        ]
+      ],
+      "bound": 6,
+      "safe_model": {
+        "status": "unsat",
+        "bound": 6,
+        "path": null
+      },
+      "faulty_model": {
+        "status": "sat",
+        "depth": 2,
+        "path": [
+          "READY",
+          "AUTHENTICATED",
+          "CHECKED_OUT"
+        ]
+      },
+      "liveness_counterexample": {
+        "status": "unsat",
+        "bound": 6,
+        "path": null
+      },
+      "pass": true
+    },
+    {
+      "function": "leave",
+      "title": "Duyệt đơn nghỉ phép",
+      "spec_sha256": "cb4c0e4ea48e9495a939f1ae2ed7e52818c4f3a4e3bddd17e49e28bcf20facb5",
+      "reachable_states": 4,
+      "transition_count": 5,
+      "forbidden_edges": [
+        [
+          "APPROVED",
+          "APPROVED"
+        ],
+        [
+          "NO_REQUEST",
+          "APPROVED"
+        ],
+        [
+          "REJECTED",
+          "APPROVED"
+        ],
+        [
+          "APPROVED",
+          "REJECTED"
+        ],
+        [
+          "NO_REQUEST",
+          "REJECTED"
+        ],
+        [
+          "REJECTED",
+          "REJECTED"
+        ]
+      ],
+      "bound": 4,
+      "safe_model": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "faulty_model": {
+        "status": "sat",
+        "depth": 1,
+        "path": [
+          "NO_REQUEST",
+          "APPROVED"
+        ]
+      },
+      "liveness_counterexample": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "pass": true
+    },
+    {
+      "function": "login",
+      "title": "Xác thực đăng nhập",
+      "spec_sha256": "aa5375a51533e904812b66bd00c238d880101ef0e141d70a07095dafda988d95",
+      "reachable_states": 8,
+      "transition_count": 10,
+      "forbidden_edges": [
+        [
+          "AUTHENTICATED",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATING_INACTIVE",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATING_INVALID",
+          "AUTHENTICATED"
+        ],
+        [
+          "INACTIVE_USER",
+          "AUTHENTICATED"
+        ],
+        [
+          "LOGGED_OUT",
+          "AUTHENTICATED"
+        ],
+        [
+          "LOGIN_FAILED",
+          "AUTHENTICATED"
+        ],
+        [
+          "UNAUTHENTICATED",
+          "AUTHENTICATED"
+        ]
+      ],
+      "bound": 8,
+      "safe_model": {
+        "status": "unsat",
+        "bound": 8,
+        "path": null
+      },
+      "faulty_model": {
+        "status": "sat",
+        "depth": 1,
+        "path": [
+          "UNAUTHENTICATED",
+          "AUTHENTICATED"
+        ]
+      },
+      "liveness_counterexample": {
+        "status": "unsat",
+        "bound": 8,
+        "path": null
+      },
+      "pass": true
+    },
+    {
+      "function": "payroll",
+      "title": "Tính và thanh toán lương",
+      "spec_sha256": "7ea81c9aedf4f0b3da4a3b089ab4087168aa02c63fc0c258293df1b3d82ea584",
+      "reachable_states": 4,
+      "transition_count": 4,
+      "forbidden_edges": [
+        [
+          "CALCULATING",
+          "CALCULATING"
+        ],
+        [
+          "DRAFT",
+          "CALCULATING"
+        ],
+        [
+          "PAID",
+          "CALCULATING"
+        ],
+        [
+          "DRAFT",
+          "DRAFT"
+        ],
+        [
+          "NOT_CALCULATED",
+          "DRAFT"
+        ],
+        [
+          "PAID",
+          "DRAFT"
+        ],
+        [
+          "CALCULATING",
+          "PAID"
+        ],
+        [
+          "NOT_CALCULATED",
+          "PAID"
+        ]
+      ],
+      "bound": 4,
+      "safe_model": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "faulty_model": {
+        "status": "sat",
+        "depth": 4,
+        "path": [
+          "NOT_CALCULATED",
+          "CALCULATING",
+          "DRAFT",
+          "PAID",
+          "DRAFT"
+        ]
+      },
+      "liveness_counterexample": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "pass": true
+    }
+  ],
+  "generated_static_model_test_cases": 34,
+  "memory_measurement": {
+    "repeat_count": 20,
+    "process_rss_before_kib": 28500,
+    "process_rss_after_kib": 68916,
+    "process_peak_rss_kib": 77208,
+    "python_heap_current_bytes": 16360,
+    "python_heap_peak_bytes": 55389,
+    "system_mem_available_before_kib": 8929220,
+    "system_mem_available_after_kib": 8885988,
+    "elapsed_seconds": 6.737839,
+    "cpu_user_seconds": 6.681305,
+    "cpu_system_seconds": 0.093098
+  },
+  "memory_samples": [
+    {
+      "iteration": 1,
+      "process_rss_kib": 60612,
+      "python_heap_current_bytes": 7194,
+      "python_heap_peak_bytes": 44534
+    },
+    {
+      "iteration": 2,
+      "process_rss_kib": 60624,
+      "python_heap_current_bytes": 8193,
+      "python_heap_peak_bytes": 47765
+    },
+    {
+      "iteration": 3,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 9096,
+      "python_heap_peak_bytes": 48732
+    },
+    {
+      "iteration": 4,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 9607,
+      "python_heap_peak_bytes": 49635
+    },
+    {
+      "iteration": 5,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 9998,
+      "python_heap_peak_bytes": 50146
+    },
+    {
+      "iteration": 6,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 10421,
+      "python_heap_peak_bytes": 50569
+    },
+    {
+      "iteration": 7,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 10761,
+      "python_heap_peak_bytes": 50901
+    },
+    {
+      "iteration": 8,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 11096,
+      "python_heap_peak_bytes": 51300
+    },
+    {
+      "iteration": 9,
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 11431,
+      "python_heap_peak_bytes": 51635
+    },
+    {
+      "iteration": 10,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 11830,
+      "python_heap_peak_bytes": 52034
+    },
+    {
+      "iteration": 11,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 12106,
+      "python_heap_peak_bytes": 52310
+    },
+    {
+      "iteration": 12,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 12441,
+      "python_heap_peak_bytes": 52645
+    },
+    {
+      "iteration": 13,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 12776,
+      "python_heap_peak_bytes": 52980
+    },
+    {
+      "iteration": 14,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13111,
+      "python_heap_peak_bytes": 53315
+    },
+    {
+      "iteration": 15,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13446,
+      "python_heap_peak_bytes": 53650
+    },
+    {
+      "iteration": 16,
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13781,
+      "python_heap_peak_bytes": 53985
+    },
+    {
+      "iteration": 17,
+      "process_rss_kib": 60724,
+      "python_heap_current_bytes": 14116,
+      "python_heap_peak_bytes": 54320
+    },
+    {
+      "iteration": 18,
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 14515,
+      "python_heap_peak_bytes": 54719
+    },
+    {
+      "iteration": 19,
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 14850,
+      "python_heap_peak_bytes": 55054
+    },
+    {
+      "iteration": 20,
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 15185,
+      "python_heap_peak_bytes": 55389
+    }
+  ]
+}
