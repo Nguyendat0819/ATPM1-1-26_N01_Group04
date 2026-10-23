@@ -1,4 +1,4 @@
-"""Display a saved BMC witness alongside the run's memory measurements."""
+"""Hiển thị trace phản ví dụ đã lưu cạnh số đo RAM của lần chạy BMC gần nhất."""
 import argparse
 import json
 import sys
@@ -11,6 +11,7 @@ DEFAULT_RESULTS = ROOT / "results" / "z3_bmc_memory.json"
 
 
 def render_memory(result):
+    """Định dạng RSS, heap Python, RAM hệ thống và thông tin phiên bản thành Markdown."""
     memory = result["memory_measurement"]
     samples = result["memory_samples"]
     rss_samples = [item["process_rss_kib"] for item in samples]
@@ -30,7 +31,9 @@ def render_memory(result):
 
 
 def render_trace(spec, row):
+    """Giải mã state trong trace Z3, đánh dấu cạnh vi phạm và từ chối dữ liệu đã cũ."""
     name = spec["name"]
+    # Hash spec cùng số transition giúp tránh trình bày trace sinh từ phiên bản đặc tả khác.
     if (
         row["function"] != name
         or row["transition_count"] != len(spec["transitions"])
@@ -93,6 +96,7 @@ def render_trace(spec, row):
 
 
 def main(argv=None):
+    """Đọc JSON kết quả, chọn một hoặc mọi chức năng, rồi in bảng trace/RAM."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--feature", default="all", choices=["all", "login", "attendance", "leave", "payroll"])
     parser.add_argument("--results", type=Path, default=DEFAULT_RESULTS)

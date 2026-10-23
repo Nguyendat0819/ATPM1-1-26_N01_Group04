@@ -1,4 +1,4 @@
-"""Generate and verify all declared HRM Kripke models."""
+"""Điều phối sinh artifact, kiểm tra Safety/Liveness và ghi báo cáo cho bốn mô hình HRM."""
 import importlib
 import json
 import sys
@@ -19,17 +19,20 @@ from generate_artifacts import forbidden_edges_for_spec, generate_artifacts
 
 
 def load_builder(module_name):
+    """Nạp module model theo tên rồi lấy hàm build_model để tạo mô hình mới."""
     module = importlib.import_module(module_name)
     return module.build_model
 
 
 def run_one(spec, case_counts):
+    """Kiểm chứng một chức năng trên model đúng/lỗi và tổng hợp độ phủ test."""
     name = spec["name"]
     safe = load_builder(f"{name}_kripke")()
     faulty = load_builder(f"{name}_faulty")()
     safety = spec["properties"]["safety"]
     forbidden_edges = forbidden_edges_for_spec(spec)
     state_count = reachable_state_count(safe)
+    # Bound bằng số state reachable: nếu cạnh cấm reachable thì có đường đơn tới nó.
     safety_bound = state_count
     safe_counterexample = shortest_forbidden_edge_counterexample(safe, forbidden_edges, safety_bound)
     faulty_counterexample = shortest_forbidden_edge_counterexample(faulty, forbidden_edges, safety_bound)
@@ -78,6 +81,7 @@ def run_one(spec, case_counts):
 
 
 def main():
+    """Chạy pipeline cho cả bốn chức năng, lưu JSON và in log PASS/FAIL."""
     specs, cases = generate_artifacts()
     case_counts = {
         spec["name"]: {
@@ -90,6 +94,7 @@ def main():
         for spec in specs
     }
     results = [run_one(spec, case_counts[spec["name"]]) for spec in specs]
+    # PASS chỉ khi model đúng không vi phạm Safety, model lỗi bị bắt và Liveness đạt.
     all_pass = all(
         row["safety"]["safe_model_pass"]
         and row["safety"]["faulty_model_detected"]

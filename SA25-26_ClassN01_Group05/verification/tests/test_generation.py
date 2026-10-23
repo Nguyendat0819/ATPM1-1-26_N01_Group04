@@ -1,3 +1,4 @@
+"""Kiểm tra bộ sinh tạo đủ model, test case và phát hiện các lỗi Safety/Liveness."""
 import importlib
 import sys
 import unittest
@@ -12,11 +13,15 @@ from properties.check_properties import run_suite
 
 
 class GeneratedModelTests(unittest.TestCase):
+    """Các kiểm thử hồi quy cho pipeline đặc tả JSON → model Kripke → test tĩnh."""
+
     @classmethod
     def setUpClass(cls):
+        """Sinh artifact một lần để các test dùng chung cùng bộ đặc tả và test cases."""
         cls.specs, cls.cases = generate_artifacts()
 
     def test_four_features_generate_transition_coverage(self):
+        """Đảm bảo có đúng bốn chức năng và mỗi transition tạo được ca kiểm thử."""
         self.assertEqual(len(self.specs), 4)
         expected = sum(
             len(spec["transitions"]) + 1 + len(spec["properties"]["liveness"]["starts"])
@@ -29,6 +34,7 @@ class GeneratedModelTests(unittest.TestCase):
         self.assertIn("GEN-LOGIN-SAFETY-01", markdown.read_text(encoding="utf-8"))
 
     def test_generated_cases_cover_transitions_safety_and_liveness(self):
+        """Đối chiếu đường đi của từng test với cạnh, lỗi Safety hoặc nhãn Liveness."""
         self.assertEqual(sum(case["coverage"] == "transition" for case in self.cases), 26)
         self.assertEqual(sum(case["coverage"] == "safety_constraint" for case in self.cases), 4)
         self.assertEqual(sum(case["coverage"] == "liveness_witness" for case in self.cases), 4)
@@ -60,6 +66,7 @@ class GeneratedModelTests(unittest.TestCase):
                         self.assertTrue(set(case["target_labels"]).intersection(model.labels[path[-1]]))
 
     def test_safe_and_faulty_models_match_each_property(self):
+        """Xác nhận model đúng an toàn, model faulty bị bắt và Liveness thỏa."""
         for spec in self.specs:
             with self.subTest(feature=spec["name"]):
                 safe = importlib.import_module(f"{spec['name']}_kripke").build_model()

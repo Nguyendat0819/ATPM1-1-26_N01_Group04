@@ -30,12 +30,41 @@ Các cạnh quay về `NO_REQUEST` sau trạng thái kết thúc của nghỉ ph
 
 ## BMC-Z3 cho bốn chức năng
 
-Với bound `k`, Z3 tạo các biến `state_0 ... state_k`, ràng buộc `state_0` là trạng thái đầu, mỗi cặp kế tiếp thuộc quan hệ chuyển tiếp, rồi hỏi có trace nào đi qua cạnh cấm không.
+### Suy ra bound (completeness threshold)
 
-- Login, Attendance, Leave và Payroll đều được unroll bằng Z3.
-- Mô hình đúng trả `UNSAT` tới bound bằng số trạng thái reachable; mô hình lỗi thêm cạnh vi phạm và trả `SAT` kèm trace.
-- Safety trên graph hữu hạn có bound hoàn chỉnh cho cạnh cấm: một đường tới nguồn cạnh có thể rút gọn thành đường không lặp, sau đó đi cạnh vi phạm.
-- Liveness được kiểm bằng truy vấn Z3 tìm đường dài `|S_reachable|` tránh mọi target. Các đặc tả bảo đảm transition relation total; do đó đường tránh target dài hơn số state phải lặp state và tạo chu trình vô hạn. Checker đồ thị fixed point `AF` trong Python cũng được chạy như phép đối chiếu.
+Bound không được chọn theo cảm tính. Chương trình bắt đầu ở state đầu `s0`, duyệt quan hệ chuyển tiếp `R`, rồi lấy `k = |Reach(s0)|` bằng `reachable_states()` trong `bmc/z3_bounded_checker.py`. Bộ kiểm tra đặc tả cũng yêu cầu mọi state đã khai báo đều reachable từ state đầu; vì vậy bốn mô hình hiện tại có `k` như sau:
+
+| Chức năng | Số state reachable `k` | Ý nghĩa khi unroll |
+|---|---:|---|
+| Login | 8 | Tối đa 8 cạnh để chạm cạnh vi phạm; mỗi truy vấn có tối đa 9 lần xuất hiện state |
+| Attendance | 6 | Tối đa 6 cạnh; tối đa 7 lần xuất hiện state |
+| Leave | 4 | Tối đa 4 cạnh; tối đa 5 lần xuất hiện state |
+| Payroll | 4 | Tối đa 4 cạnh; tối đa 5 lần xuất hiện state |
+
+Với Safety, nếu một cạnh cấm có thể tới được, lấy đường ngắn nhất từ state đầu tới nguồn cạnh đó. Đường ngắn nhất không lặp state, nên có nhiều nhất `k−1` cạnh; thêm cạnh vi phạm thì tổng độ dài nhiều nhất `k`. Vì vậy, Z3 thử lần lượt độ sâu `1..k`. Đây là completeness bound cho mô hình hữu hạn đang xét. Lưu ý `k` đếm số **cạnh chuyển** tối đa trong trace Safety; các biến `s0..sk` là `k+1` lần xuất hiện state.
+
+### Cách chuyển đặc tả thành ràng buộc Z3
+
+Thứ tự state trong JSON được ánh xạ thành mã nguyên `code(s)`. Ở độ sâu `d`, checker tạo `s0..sd` và thêm các ràng buộc sau:
+
+```text
+Domain(si) := si thuộc tập mã của các state đã khai báo
+Init(s0)   := s0 = code(state đầu)
+Step(si,si+1) := OR trên mọi (u,v) thuộc R của
+                 (si = code(u) AND si+1 = code(v))
+Bad(si,si+1)  := OR trên các cạnh bị cấm của
+                 (si = code(u) AND si+1 = code(v))
+```
+
+Truy vấn Safety ở một độ sâu `d` là `Init(s0) AND AND_i Domain(si) AND AND_i Step(si,si+1) AND Bad(s(d−1),sd)`. Các bước trước cạnh cuối phải tuân theo transition relation của mô hình; cạnh cuối phải là cạnh vi phạm. Z3 trả `SAT` kèm giá trị các biến state khi tìm thấy trace; `UNSAT` ở mọi độ sâu từ 1 đến `k` nghĩa là không có phản ví dụ trong mô hình và bound đó. `UNKNOWN` (ví dụ hết timeout) là kết quả chưa kết luận, không được diễn giải thành PASS.
+
+`allowed_predecessors` được `forbidden_edges_for_spec()` đổi thành các cặp nguồn–đích không được phép. Ví dụ, Login khai báo `AUTHENTICATED` chỉ có tiền nhiệm `AUTHENTICATING_ACTIVE`; do đó `UNAUTHENTICATED → AUTHENTICATED` là cạnh cấm. Khi thử nghiệm faulty, runner chủ động thêm cạnh này vào `R`; Z3 tìm được phản ví dụ `UNAUTHENTICATED → AUTHENTICATED` (SAT). Với Attendance, `CHECKED_OUT` chỉ được đến từ `CHECKED_IN`; thêm cạnh faulty `AUTHENTICATED → CHECKED_OUT` làm Z3 trả trace `READY → AUTHENTICATED → CHECKED_OUT` (SAT). Mô hình bình thường không chứa các cạnh lỗi nên truy vấn không tìm được phản ví dụ (UNSAT).
+
+Với Liveness `AF(target)`, phản ví dụ là một đường vô hạn bắt đầu tại `starts` nhưng không bao giờ chạm state mang nhãn target. Checker hỏi Z3 liệu có đường dài `k` cạnh mà **mọi** state `s0..sk` đều không thuộc target hay không. Do quan hệ chuyển tiếp của Kripke phải total, một đường như vậy có `k+1` lần xuất hiện state trên đồ thị có `k` state reachable; theo nguyên lý Dirichlet, có state lặp và tạo chu trình tránh target, tức phản ví dụ vô hạn cho `AF`. `UNSAT` ở bound này loại trừ chu trình tránh target trong mô hình. Kiểm tra totality và phép đối chiếu fixed-point `AF` được thực hiện riêng.
+
+### Phạm vi encoding
+
+`formula` trong JSON là công thức mô tả cho người đọc, không được parser CTL/LTL tổng quát. Mã hiện tại thực thi cấu trúc cụ thể từ `transitions`, `allowed_predecessors`/`forbidden_edges`, `starts` và `target_labels`. Xem `bmc/z3_bounded_checker.py` (unroll/constraint), `run_z3_demo.py` (chọn bound và ánh xạ nhãn), và `generate_artifacts.py` (`forbidden_edges_for_spec`) để lần theo từng bước. Kết quả chứng minh trên mô hình đã mã hóa, không tự chứng minh implementation Express hoặc database tương đương mô hình.
 
 ## Test case tĩnh và giới hạn
 

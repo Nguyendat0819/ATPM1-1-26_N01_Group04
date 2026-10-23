@@ -31,7 +31,13 @@ Safety chính:
 
 ## BMC bằng Z3 cho cả bốn chức năng
 
-Z3 unroll quan hệ chuyển tiếp thành biến trạng thái ở từng bước, ép trạng thái đầu và hỏi liệu trace có thể đi qua một cạnh cấm hay không. Bound dùng số trạng thái reachable của mô hình. Với safety trên đồ thị hữu hạn, đường tới cạnh vi phạm có thể rút gọn để không lặp state trước cạnh đó.
+Z3 ánh xạ mỗi state trong JSON thành một mã nguyên và tạo biến `s0..sd` cho từng truy vấn độ sâu `d`. Mỗi biến được giới hạn trong miền state; `s0` bằng state đầu; từng cặp `(si,si+1)` phải thỏa một trong các cạnh của `R`. Ở cạnh cuối, truy vấn yêu cầu cặp state thuộc tập cạnh cấm. `SAT` trả các giá trị state thành trace phản ví dụ; `UNSAT` nghĩa là không có phản ví dụ ở độ sâu đó. Runner tăng dần từ 1 đến bound nên trace SAT đầu tiên là ngắn nhất.
+
+Bound được suy ra bằng `k = |Reach(s0)|`, kết quả của DFS trong `reachable_states()`; không phải một số tùy ý. Safety: đường ngắn nhất từ state đầu đến nguồn cạnh cấm không lặp state, nên dài tối đa `k−1` cạnh; thêm cạnh lỗi là tối đa `k` cạnh. Do đó truy vấn độ sâu `1..k` đủ để phát hiện cạnh vi phạm. Một truy vấn độ sâu `d` có `d+1` lần xuất hiện state (`s0..sd`). Các bound hiện tại là Login 8, Attendance 6, Leave 4, Payroll 4.
+
+Liveness `AF(target)` được kiểm bằng cách tìm đường dài `k` cạnh mà mọi state trong `s0..sk` tránh target. Các mô hình là Kripke total; trong `k+1` lần xuất hiện trên graph có `k` state phải có lặp state, sinh chu trình tránh target và một phản ví dụ vô hạn. `UNSAT` loại trừ chu trình đó. Nếu Z3 trả `UNKNOWN` do timeout thì chưa thể kết luận PASS.
+
+Ví dụ truy vết cấu trúc property: Login `L1` khai báo tiền nhiệm duy nhất của `AUTHENTICATED` là `AUTHENTICATING_ACTIVE`; cạnh `UNAUTHENTICATED → AUTHENTICATED` bị đánh dấu cấm. Attendance `A1` yêu cầu `CHECKED_OUT` chỉ đến từ `CHECKED_IN`; cạnh faulty `AUTHENTICATED → CHECKED_OUT` tạo trace `READY → AUTHENTICATED → CHECKED_OUT`. Runner chèn cạnh faulty có chủ ý để kiểm tra Z3 có phát hiện được vi phạm hay không. `formula` trong JSON là mô tả, không phải CTL/LTL parser; encoding trực tiếp dùng `transitions`, `allowed_predecessors`/`forbidden_edges`, `starts` và `target_labels`.
 
 Chạy 20 vòng lặp với Z3 5.3.1:
 
@@ -48,7 +54,7 @@ Với Safety, `UNSAT` nghĩa là không có trace đi qua cạnh cấm trong com
 
 Đã sinh 34 test case tĩnh từ cả bốn mô hình: phủ 26/26 transition, 4 ca kiểm tra cạnh Safety bị từ chối và 4 witness path cho Liveness. Danh sách nằm tại `generated/test_cases.json` và được lưu cùng lần chạy Z3 tại `generated/z3_demo_test_cases.json`.
 
-Memory smoke test lặp 20 lần, số đo ghi tại `results/z3_bmc_memory.log` và `.json`. Lần đo mới nhất trong báo cáo: 2026-10-19 15:53:52 UTC:
+Memory smoke test lặp 20 lần, số đo ghi tại `results/z3_bmc_memory.log` và `.json`. Lần đo của báo cáo này: 2026-10-19 15:53:52 UTC:
 
 - Thời gian: 8.03 giây; CPU user/system: 7.94/0.08 giây.
 - RSS tiến trình: 28,652 KiB lúc đầu, đỉnh 78,424 KiB, 70,108 KiB lúc cuối.
@@ -69,7 +75,11 @@ python verification/show_bmc_memory.py --feature all
 python -m unittest discover -s verification/tests -v
 ```
 
-Kết quả lần chạy: `run_all.py` PASS cho 4 mô hình và 34 test case; Z3 BMC PASS cho cả 4 mô hình ở Safety và Liveness; 10/10 unit tests PASS.
+Kết quả tại thời điểm báo cáo này: `run_all.py` đã PASS cho 4 mô hình và 34 test case; sau khi bổ sung kiểm tra bound 8/6/4/4, toàn bộ 11/11 unit tests PASS. Z3 BMC được kiểm tra cho cả bốn mô hình ở Safety/Liveness và cả các cạnh cấm được chèn lỗi.
+
+## Phiên kiểm thử bổ sung ngày 24/10/2026
+
+Đã xuất bảng ánh xạ 26 transition sang mệnh đề Z3 và 12 truy vấn SMT-LIB từ cùng hàm tạo ràng buộc của checker. Nạp lại 12/12 file trên đĩa cho đúng SAT/UNSAT và 4/4 fingerprint đặc tả khớp; bộ unit test hiện có 12/12 PASS. Lần chạy BMC-Z3 riêng 20 vòng đạt PASS; RSS tiến trình trước/sau/đỉnh 27.980/68.420/68.420 KiB, thời gian 7,611546 giây trên máy kiểm thử. Xem [`biên bản test`](BIEN_BAN_KIEM_THU_2026-10-24.md), [`bản Word`](Bien_ban_kiem_thu_Kripke_BMC_HRM_2026-10-24.docx), [`minh chứng Z3`](../generated/z3_evidence/README.md) và [`log mới`](../results/teacher_demo_2026-10-24/z3_bmc_memory.log). Số đo cũ phía trên vẫn là ảnh chụp của ngày 19/10, không bị ghi đè.
 
 ## Giới hạn
 

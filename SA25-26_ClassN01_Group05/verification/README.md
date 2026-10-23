@@ -4,6 +4,8 @@ Thư mục này đặc tả bốn luồng HRM: đăng nhập, chấm công, ngh�
 
 Sơ đồ hai luồng, ánh xạ đặc tả → test case → BMC, cấu trúc dữ liệu trong bộ nhớ và hướng dẫn xem từng biến Z3 nằm ở [`docs/DESIGN_FLOWS_MEMORY.md`](docs/DESIGN_FLOWS_MEMORY.md).
 
+Biên bản kiểm thử mới nhất để nộp và đối chiếu với giảng viên: [`Word`](docs/Bien_ban_kiem_thu_Kripke_BMC_HRM_2026-10-24.docx) và [`Markdown kèm liên kết minh chứng`](docs/BIEN_BAN_KIEM_THU_2026-10-24.md). Biên bản ghi rõ cách xác định bound, ánh xạ transition sang Z3, 12 truy vấn SMT-LIB chạy lại được và log đo RAM 20 vòng.
+
 ## Chuỗi sinh
 
 `specs/*.json` là nguồn trạng thái, nhãn, trạng thái đầu, chuyển tiếp và thuộc tính. Bộ sinh tạo `models/*_kripke.py`, `faulty_models/*_faulty.py`, JSON test case và bảng Markdown tại `generated/test_cases.md`. Bộ test tĩnh có ca phủ từng transition hợp lệ, ca âm cho mỗi ràng buộc Safety và witness path cho từng thuộc tính Liveness. Các ca này kiểm tra mô hình trạng thái, chưa gọi HTTP API.
@@ -41,6 +43,24 @@ python verification/show_bmc_memory.py --feature all
 Thêm `--feature login`, `attendance`, `leave` hoặc `payroll` để chỉ xem snapshot biến trạng thái của một chức năng. Lệnh xem đọc lần chạy Z3 gần nhất trong `results/z3_bmc_memory.json`; nếu mô hình đã đổi, chạy lại demo trước. Không cài `z3-solver` bằng `pip` vào Python hệ thống Ubuntu khi gặp lỗi `externally-managed-environment`.
 
 Mỗi time-step được biểu diễn bằng một biến trạng thái số nguyên. Z3 nhận state đầu, miền state và quan hệ chuyển tiếp. Với Safety, solver hỏi có trace nào đi qua cạnh cấm không: mô hình đúng phải `UNSAT`, mô hình lỗi phải `SAT` và trả counterexample. Với Liveness, solver hỏi có đường dài bằng số state reachable mà tránh toàn bộ target không. Do Kripke relation ở đây total và hữu hạn, một đường dài như vậy lặp lại state và chứng minh tồn tại vòng lặp vô hạn tránh target; `UNSAT` xác nhận không có phản ví dụ Liveness trong mô hình.
+
+Để giảng viên đối chiếu từng transition với điều kiện Z3 và xem truy vấn SMT-LIB có thể chạy lại, xuất minh chứng:
+
+```bash
+python verification/export_z3_evidence.py
+python verification/replay_z3_evidence.py
+```
+
+Lệnh tạo `generated/z3_evidence/README.md` (nguồn JSON, mã state, từng mệnh đề chuyển tiếp, bound và trace), `summary.json` (kết quả máy đọc) và 12 file `.smt2` cho Safety chuẩn, Safety chèn lỗi và Liveness của bốn chức năng. Các file SMT-LIB được xuất từ cùng hàm tạo ràng buộc mà checker gọi. Kết quả Safety chuẩn trong bảng tổng hợp đến từ việc kiểm mọi độ sâu `1..k`; file SMT-LIB ở độ sâu `k` là một truy vấn minh họa.
+
+Lệnh `replay_z3_evidence.py` nạp lại cả 12 file `.smt2` từ đĩa bằng Z3, so kết quả SAT/UNSAT đã ghi và đối chiếu fingerprint của bốn đặc tả để phát hiện minh chứng cũ.
+
+Muốn lưu lần đo Z3 mới mà vẫn giữ log cũ, chỉ định thư mục kết quả riêng:
+
+```bash
+python verification/run_z3_demo.py --repeat 20 --results-dir verification/results/teacher_demo
+python verification/show_bmc_memory.py --feature all --results verification/results/teacher_demo/z3_bmc_memory.json
+```
 
 ## Log và số đo RAM
 
