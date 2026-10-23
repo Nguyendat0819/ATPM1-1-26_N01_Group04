@@ -1,3 +1,4 @@
+"""Gom các phép kiểm tra Safety và Liveness cho một đặc tả cùng mô hình Kripke."""
 from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,7 @@ from generate_artifacts import forbidden_edges_for_spec
 
 
 def run_suite(spec, model):
+    """Chạy checker đồ thị cho Safety/Liveness và trả về kết quả có bound, trace."""
     safety = spec["properties"]["safety"]
     liveness = spec["properties"]["liveness"]
     bound = reachable_state_count(model)

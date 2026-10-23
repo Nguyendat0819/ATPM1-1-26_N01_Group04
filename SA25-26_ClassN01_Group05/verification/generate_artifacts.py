@@ -1,4 +1,4 @@
-"""Generate Python Kripke models and transition-coverage cases from JSON specs."""
+"""Sinh mô hình Kripke và test case tĩnh từ các đặc tả JSON của HRM."""
 from collections import deque
 from hashlib import sha256
 import json
@@ -12,11 +12,13 @@ GENERATED_DIR = ROOT / "generated"
 
 
 def spec_fingerprint(spec):
+    """Tạo mã SHA-256 ổn định để phát hiện kết quả BMC cũ so với đặc tả hiện tại."""
     encoded = json.dumps(spec, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return sha256(encoded).hexdigest()
 
 
 def load_specs():
+    """Đọc, kiểm tra và trả về toàn bộ đặc tả chức năng trong thư mục specs."""
     specs = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(SPEC_DIR.glob("*.json"))]
     if not specs:
         raise ValueError(f"No model specifications found in {SPEC_DIR}")
@@ -29,6 +31,7 @@ def load_specs():
 
 
 def forbidden_edges_for_spec(spec):
+    """Quy đổi ràng buộc Safety thành danh sách cạnh mà checker phải xem là vi phạm."""
     safety = spec["properties"]["safety"]
     if "forbidden_edges" in safety:
         return [tuple(edge) for edge in safety["forbidden_edges"]]
@@ -43,6 +46,7 @@ def forbidden_edges_for_spec(spec):
 
 
 def validate_spec(spec):
+    """Bảo đảm đặc tả tạo thành Kripke hợp lệ trước khi sinh model và test."""
     source = spec.get("implementation_source")
     if not source or not (ROOT.parent / source).is_file():
         raise ValueError(f"{spec['name']}: implementation source file is missing")
@@ -56,6 +60,7 @@ def validate_spec(spec):
     edges = [tuple(edge) for edge in spec["transitions"]]
     if len(edges) != len(set(edges)):
         raise ValueError(f"{spec['name']}: transitions must be unique")
+    # Transition chỉ được nối các state đã khai báo để tránh mô hình tham chiếu nhầm state.
     if any(source not in known or target not in known for source, target in edges):
         raise ValueError(f"{spec['name']}: transition references an unknown state")
     safety = spec["properties"]["safety"]
@@ -75,6 +80,7 @@ def validate_spec(spec):
         raise ValueError(f"{spec['name']}: liveness target label is not defined")
     if not set(liveness["starts"]).issubset(known):
         raise ValueError(f"{spec['name']}: liveness start state is not defined")
+    # Kripke cần quan hệ chuyển tiếp total: mọi state đều phải có ít nhất một bước kế tiếp.
     outgoing = {source for source, _ in edges}
     deadlocks = known - outgoing
     if deadlocks:
@@ -94,6 +100,7 @@ def validate_spec(spec):
 
 
 def render_safe_model(spec):
+    """Kết xuất Python builder cho mô hình đúng; JSON vẫn là nguồn đặc tả chính."""
     lines = [
         f'"""Generated from verification/specs/{spec["name"]}.json; edit the spec instead."""',
         "from pathlib import Path",
@@ -115,6 +122,7 @@ def render_safe_model(spec):
 
 
 def render_faulty_model(spec):
+    """Sinh builder mô hình thử lỗi bằng cách thêm đúng cạnh vi phạm đã khai báo."""
     source, target = spec["faulty_transition"]
     return "\n".join([
         f'"""Generated faulty model for {spec["name"]}; used to check counterexample detection."""',
@@ -132,6 +140,7 @@ def render_faulty_model(spec):
 
 
 def shortest_paths(model):
+    """Tìm đường ngắn nhất từ state đầu tới mỗi state để làm tiền tố cho test case."""
     paths = {}
     queue = deque([[state] for state in sorted(model.initial)])
     while queue:
@@ -147,6 +156,7 @@ def shortest_paths(model):
 
 
 def shortest_path_to_label(model, start, target_labels):
+    """Tìm witness path ngắn nhất từ state bắt đầu tới state mang nhãn đích Liveness."""
     target_labels = set(target_labels)
     queue = deque([[start]])
     seen = {start}
@@ -163,28 +173,49 @@ def shortest_path_to_label(model, start, target_labels):
 
 
 def case_steps(state_path):
+    """Chuyển danh sách state thành các bước chuyển dạng chuỗi để đưa vào báo cáo test."""
     return [f"{source} -> {target}" for source, target in zip(state_path, state_path[1:])]
 
 
 def render_test_cases_markdown(test_cases):
+    """Trình bày danh sách test case sinh ra thành bảng Markdown dễ đọc."""
+    coverage_names = {
+        "transition": "Phủ chuyển tiếp",
+        "safety_constraint": "Kiểm tra ràng buộc an toàn (Safety)",
+        "liveness_witness": "Đường chứng kiến tính sống (Liveness)",
+    }
     rows = [
-        "# Test case tĩnh được sinh từ mô hình Kripke",
+        "# Ca kiểm thử tĩnh được sinh từ mô hình Kripke",
         "",
-        "Các ca dưới đây kiểm tra trạng thái và transition trong mô hình; chúng không gửi request tới các API HRM.",
+        "Các ca dưới đây kiểm tra đường đi trạng thái, chuyển tiếp và thuộc tính trên mô hình Kripke. Đây là kiểm thử tĩnh ở mức mô hình; chương trình không gửi yêu cầu HTTP đến API HRM.",
         "",
-        "| ID | Chức năng | Mã nguồn nghiệp vụ | Loại phủ | Đường trạng thái | Kết quả mong đợi |",
+        "Tên state, ID kiểm thử và đường dẫn mã nguồn được giữ nguyên để có thể đối chiếu trực tiếp với đặc tả JSON và repository.",
+        "",
+        "| ID | Chức năng | Mã nguồn triển khai | Loại kiểm thử / độ phủ | Đường trạng thái | Kết quả mong đợi |",
         "|---|---|---|---|---|---|",
     ]
     for case in test_cases:
         path = " → ".join(case["state_path"])
-        expected = case["expected"].replace("|", "\\|")
+        coverage = coverage_names.get(case["coverage"], case["coverage"])
+        if case["coverage"] == "transition":
+            expected = f"Đi đến trạng thái {case['transition'][1]} theo chuyển tiếp đã khai báo."
+        elif case["coverage"] == "safety_constraint":
+            source, target = case["transition"]
+            expected = f"Từ chối chuyển tiếp {source} → {target} vì vi phạm ràng buộc {case['property_id']}."
+        elif case["coverage"] == "liveness_witness":
+            labels = ", ".join(case["target_labels"])
+            expected = f"Đạt trạng thái mang một trong các nhãn mục tiêu: {labels}."
+        else:
+            expected = case["expected"]
+        expected = expected.replace("|", "\\|")
         rows.append(
-            f"| {case['id']} | {case['feature']} | `{case['implementation_source']}` | {case['coverage']} | `{path}` | {expected} |"
+            f"| {case['id']} | {case['feature']} | `{case['implementation_source']}` | {coverage} | `{path}` | {expected} |"
         )
     return "\n".join(rows) + "\n"
 
 
 def generate_artifacts():
+    """Sinh safe/faulty model, test phủ transition, test Safety âm và witness Liveness."""
     MODEL_DIR.mkdir(exist_ok=True)
     FAULTY_DIR.mkdir(exist_ok=True)
     GENERATED_DIR.mkdir(exist_ok=True)
@@ -196,6 +227,7 @@ def generate_artifacts():
         model = build_model_from_spec(spec)
         paths = shortest_paths(model)
         reachable = model.reachable_states()
+        # Mỗi cạnh nghiệp vụ được biến thành một test riêng, với đường đi từ state đầu.
         for index, (source, target) in enumerate(spec["transitions"], start=1):
             if source not in paths:
                 continue
@@ -258,6 +290,7 @@ def generate_artifacts():
 
 
 def build_model_from_spec(spec):
+    """Tạo đối tượng Kripke trong bộ nhớ trực tiếp từ một đặc tả JSON."""
     sys_path = str(ROOT / "lib")
     import sys
     if sys_path not in sys.path:

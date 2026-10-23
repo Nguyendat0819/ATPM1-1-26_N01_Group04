@@ -1,0 +1,582 @@
+{
+  "timestamp_utc": "2026-10-23T17:28:33.118973+00:00",
+  "z3_version": "5.3.1",
+  "status": "PASS",
+  "features": [
+    {
+      "feature": "attendance",
+      "implementation_source": "attendance_service/routes/attendance.js",
+      "spec_path": "specs/attendance.json",
+      "spec_sha256": "e1fdeed5fbf17af1239ab05a123ce1cf606515a9507302cad09245a382acae2d",
+      "initial": "READY",
+      "state_codes": {
+        "READY": 0,
+        "AUTHENTICATED": 1,
+        "CHECKIN_VALID": 2,
+        "CHECKED_IN": 3,
+        "CHECKED_OUT": 4,
+        "VERIFY_FAILED": 5
+      },
+      "transitions": [
+        [
+          "READY",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATED",
+          "VERIFY_FAILED"
+        ],
+        [
+          "AUTHENTICATED",
+          "CHECKIN_VALID"
+        ],
+        [
+          "CHECKIN_VALID",
+          "CHECKED_IN"
+        ],
+        [
+          "VERIFY_FAILED",
+          "READY"
+        ],
+        [
+          "CHECKED_IN",
+          "CHECKED_OUT"
+        ],
+        [
+          "CHECKED_OUT",
+          "READY"
+        ]
+      ],
+      "reachable_states": [
+        "AUTHENTICATED",
+        "CHECKED_IN",
+        "CHECKED_OUT",
+        "CHECKIN_VALID",
+        "READY",
+        "VERIFY_FAILED"
+      ],
+      "bound": 6,
+      "safety_property_id": "A1",
+      "allowed_predecessors": {
+        "CHECKED_IN": [
+          "CHECKIN_VALID"
+        ],
+        "CHECKED_OUT": [
+          "CHECKED_IN"
+        ]
+      },
+      "forbidden_edges": [
+        [
+          "AUTHENTICATED",
+          "CHECKED_IN"
+        ],
+        [
+          "CHECKED_IN",
+          "CHECKED_IN"
+        ],
+        [
+          "CHECKED_OUT",
+          "CHECKED_IN"
+        ],
+        [
+          "READY",
+          "CHECKED_IN"
+        ],
+        [
+          "VERIFY_FAILED",
+          "CHECKED_IN"
+        ],
+        [
+          "AUTHENTICATED",
+          "CHECKED_OUT"
+        ],
+        [
+          "CHECKED_OUT",
+          "CHECKED_OUT"
+        ],
+        [
+          "CHECKIN_VALID",
+          "CHECKED_OUT"
+        ],
+        [
+          "READY",
+          "CHECKED_OUT"
+        ],
+        [
+          "VERIFY_FAILED",
+          "CHECKED_OUT"
+        ]
+      ],
+      "faulty_edge": [
+        "AUTHENTICATED",
+        "CHECKED_OUT"
+      ],
+      "safe_result": {
+        "status": "unsat",
+        "bound": 6,
+        "path": null
+      },
+      "faulty_result": {
+        "status": "sat",
+        "depth": 2,
+        "path": [
+          "READY",
+          "AUTHENTICATED",
+          "CHECKED_OUT"
+        ]
+      },
+      "liveness_property_id": "A2",
+      "liveness_starts": [
+        "CHECKIN_VALID"
+      ],
+      "liveness_target_labels": [
+        "checked_in"
+      ],
+      "liveness_target_states": [
+        "CHECKED_IN"
+      ],
+      "liveness_result": {
+        "status": "unsat",
+        "bound": 6,
+        "path": null
+      },
+      "safe_smt2": {
+        "path": "generated/z3_evidence/attendance_safety_safe_k6.smt2",
+        "depth": 6,
+        "status": "unsat"
+      },
+      "faulty_smt2": {
+        "path": "generated/z3_evidence/attendance_safety_faulty_k2.smt2",
+        "depth": 2,
+        "status": "sat"
+      },
+      "liveness_smt2": [
+        {
+          "start": "CHECKIN_VALID",
+          "status": "unsat",
+          "smt2": "generated/z3_evidence/attendance_liveness_start0_k6.smt2"
+        }
+      ]
+    },
+    {
+      "feature": "leave",
+      "implementation_source": "leave_service/routes/leaves.js",
+      "spec_path": "specs/leave.json",
+      "spec_sha256": "cb4c0e4ea48e9495a939f1ae2ed7e52818c4f3a4e3bddd17e49e28bcf20facb5",
+      "initial": "NO_REQUEST",
+      "state_codes": {
+        "NO_REQUEST": 0,
+        "PENDING": 1,
+        "APPROVED": 2,
+        "REJECTED": 3
+      },
+      "transitions": [
+        [
+          "NO_REQUEST",
+          "PENDING"
+        ],
+        [
+          "PENDING",
+          "APPROVED"
+        ],
+        [
+          "PENDING",
+          "REJECTED"
+        ],
+        [
+          "APPROVED",
+          "NO_REQUEST"
+        ],
+        [
+          "REJECTED",
+          "NO_REQUEST"
+        ]
+      ],
+      "reachable_states": [
+        "APPROVED",
+        "NO_REQUEST",
+        "PENDING",
+        "REJECTED"
+      ],
+      "bound": 4,
+      "safety_property_id": "LV1",
+      "allowed_predecessors": {
+        "APPROVED": [
+          "PENDING"
+        ],
+        "REJECTED": [
+          "PENDING"
+        ]
+      },
+      "forbidden_edges": [
+        [
+          "APPROVED",
+          "APPROVED"
+        ],
+        [
+          "NO_REQUEST",
+          "APPROVED"
+        ],
+        [
+          "REJECTED",
+          "APPROVED"
+        ],
+        [
+          "APPROVED",
+          "REJECTED"
+        ],
+        [
+          "NO_REQUEST",
+          "REJECTED"
+        ],
+        [
+          "REJECTED",
+          "REJECTED"
+        ]
+      ],
+      "faulty_edge": [
+        "NO_REQUEST",
+        "APPROVED"
+      ],
+      "safe_result": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "faulty_result": {
+        "status": "sat",
+        "depth": 1,
+        "path": [
+          "NO_REQUEST",
+          "APPROVED"
+        ]
+      },
+      "liveness_property_id": "LV2",
+      "liveness_starts": [
+        "PENDING"
+      ],
+      "liveness_target_labels": [
+        "approved",
+        "rejected"
+      ],
+      "liveness_target_states": [
+        "APPROVED",
+        "REJECTED"
+      ],
+      "liveness_result": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "safe_smt2": {
+        "path": "generated/z3_evidence/leave_safety_safe_k4.smt2",
+        "depth": 4,
+        "status": "unsat"
+      },
+      "faulty_smt2": {
+        "path": "generated/z3_evidence/leave_safety_faulty_k1.smt2",
+        "depth": 1,
+        "status": "sat"
+      },
+      "liveness_smt2": [
+        {
+          "start": "PENDING",
+          "status": "unsat",
+          "smt2": "generated/z3_evidence/leave_liveness_start0_k4.smt2"
+        }
+      ]
+    },
+    {
+      "feature": "login",
+      "implementation_source": "auth_service/routes/auth.js",
+      "spec_path": "specs/login.json",
+      "spec_sha256": "aa5375a51533e904812b66bd00c238d880101ef0e141d70a07095dafda988d95",
+      "initial": "UNAUTHENTICATED",
+      "state_codes": {
+        "UNAUTHENTICATED": 0,
+        "AUTHENTICATING_ACTIVE": 1,
+        "AUTHENTICATING_INVALID": 2,
+        "AUTHENTICATING_INACTIVE": 3,
+        "LOGIN_FAILED": 4,
+        "INACTIVE_USER": 5,
+        "AUTHENTICATED": 6,
+        "LOGGED_OUT": 7
+      },
+      "transitions": [
+        [
+          "UNAUTHENTICATED",
+          "AUTHENTICATING_ACTIVE"
+        ],
+        [
+          "UNAUTHENTICATED",
+          "AUTHENTICATING_INVALID"
+        ],
+        [
+          "UNAUTHENTICATED",
+          "AUTHENTICATING_INACTIVE"
+        ],
+        [
+          "AUTHENTICATING_ACTIVE",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATING_INVALID",
+          "LOGIN_FAILED"
+        ],
+        [
+          "AUTHENTICATING_INACTIVE",
+          "INACTIVE_USER"
+        ],
+        [
+          "LOGIN_FAILED",
+          "UNAUTHENTICATED"
+        ],
+        [
+          "INACTIVE_USER",
+          "UNAUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATED",
+          "LOGGED_OUT"
+        ],
+        [
+          "LOGGED_OUT",
+          "UNAUTHENTICATED"
+        ]
+      ],
+      "reachable_states": [
+        "AUTHENTICATED",
+        "AUTHENTICATING_ACTIVE",
+        "AUTHENTICATING_INACTIVE",
+        "AUTHENTICATING_INVALID",
+        "INACTIVE_USER",
+        "LOGGED_OUT",
+        "LOGIN_FAILED",
+        "UNAUTHENTICATED"
+      ],
+      "bound": 8,
+      "safety_property_id": "L1",
+      "allowed_predecessors": {
+        "AUTHENTICATED": [
+          "AUTHENTICATING_ACTIVE"
+        ]
+      },
+      "forbidden_edges": [
+        [
+          "AUTHENTICATED",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATING_INACTIVE",
+          "AUTHENTICATED"
+        ],
+        [
+          "AUTHENTICATING_INVALID",
+          "AUTHENTICATED"
+        ],
+        [
+          "INACTIVE_USER",
+          "AUTHENTICATED"
+        ],
+        [
+          "LOGGED_OUT",
+          "AUTHENTICATED"
+        ],
+        [
+          "LOGIN_FAILED",
+          "AUTHENTICATED"
+        ],
+        [
+          "UNAUTHENTICATED",
+          "AUTHENTICATED"
+        ]
+      ],
+      "faulty_edge": [
+        "UNAUTHENTICATED",
+        "AUTHENTICATED"
+      ],
+      "safe_result": {
+        "status": "unsat",
+        "bound": 8,
+        "path": null
+      },
+      "faulty_result": {
+        "status": "sat",
+        "depth": 1,
+        "path": [
+          "UNAUTHENTICATED",
+          "AUTHENTICATED"
+        ]
+      },
+      "liveness_property_id": "L2",
+      "liveness_starts": [
+        "AUTHENTICATING_ACTIVE"
+      ],
+      "liveness_target_labels": [
+        "authenticated"
+      ],
+      "liveness_target_states": [
+        "AUTHENTICATED"
+      ],
+      "liveness_result": {
+        "status": "unsat",
+        "bound": 8,
+        "path": null
+      },
+      "safe_smt2": {
+        "path": "generated/z3_evidence/login_safety_safe_k8.smt2",
+        "depth": 8,
+        "status": "unsat"
+      },
+      "faulty_smt2": {
+        "path": "generated/z3_evidence/login_safety_faulty_k1.smt2",
+        "depth": 1,
+        "status": "sat"
+      },
+      "liveness_smt2": [
+        {
+          "start": "AUTHENTICATING_ACTIVE",
+          "status": "unsat",
+          "smt2": "generated/z3_evidence/login_liveness_start0_k8.smt2"
+        }
+      ]
+    },
+    {
+      "feature": "payroll",
+      "implementation_source": "salary_service/routes/payroll.js",
+      "spec_path": "specs/payroll.json",
+      "spec_sha256": "7ea81c9aedf4f0b3da4a3b089ab4087168aa02c63fc0c258293df1b3d82ea584",
+      "initial": "NOT_CALCULATED",
+      "state_codes": {
+        "NOT_CALCULATED": 0,
+        "CALCULATING": 1,
+        "DRAFT": 2,
+        "PAID": 3
+      },
+      "transitions": [
+        [
+          "NOT_CALCULATED",
+          "CALCULATING"
+        ],
+        [
+          "CALCULATING",
+          "DRAFT"
+        ],
+        [
+          "DRAFT",
+          "PAID"
+        ],
+        [
+          "PAID",
+          "PAID"
+        ]
+      ],
+      "reachable_states": [
+        "CALCULATING",
+        "DRAFT",
+        "NOT_CALCULATED",
+        "PAID"
+      ],
+      "bound": 4,
+      "safety_property_id": "P1",
+      "allowed_predecessors": {
+        "CALCULATING": [
+          "NOT_CALCULATED"
+        ],
+        "DRAFT": [
+          "CALCULATING"
+        ],
+        "PAID": [
+          "DRAFT",
+          "PAID"
+        ]
+      },
+      "forbidden_edges": [
+        [
+          "CALCULATING",
+          "CALCULATING"
+        ],
+        [
+          "DRAFT",
+          "CALCULATING"
+        ],
+        [
+          "PAID",
+          "CALCULATING"
+        ],
+        [
+          "DRAFT",
+          "DRAFT"
+        ],
+        [
+          "NOT_CALCULATED",
+          "DRAFT"
+        ],
+        [
+          "PAID",
+          "DRAFT"
+        ],
+        [
+          "CALCULATING",
+          "PAID"
+        ],
+        [
+          "NOT_CALCULATED",
+          "PAID"
+        ]
+      ],
+      "faulty_edge": [
+        "PAID",
+        "DRAFT"
+      ],
+      "safe_result": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "faulty_result": {
+        "status": "sat",
+        "depth": 4,
+        "path": [
+          "NOT_CALCULATED",
+          "CALCULATING",
+          "DRAFT",
+          "PAID",
+          "DRAFT"
+        ]
+      },
+      "liveness_property_id": "P2",
+      "liveness_starts": [
+        "NOT_CALCULATED"
+      ],
+      "liveness_target_labels": [
+        "draft"
+      ],
+      "liveness_target_states": [
+        "DRAFT"
+      ],
+      "liveness_result": {
+        "status": "unsat",
+        "bound": 4,
+        "path": null
+      },
+      "safe_smt2": {
+        "path": "generated/z3_evidence/payroll_safety_safe_k4.smt2",
+        "depth": 4,
+        "status": "unsat"
+      },
+      "faulty_smt2": {
+        "path": "generated/z3_evidence/payroll_safety_faulty_k4.smt2",
+        "depth": 4,
+        "status": "sat"
+      },
+      "liveness_smt2": [
+        {
+          "start": "NOT_CALCULATED",
+          "status": "unsat",
+          "smt2": "generated/z3_evidence/payroll_liveness_start0_k4.smt2"
+        }
+      ]
+    }
+  ]
+}

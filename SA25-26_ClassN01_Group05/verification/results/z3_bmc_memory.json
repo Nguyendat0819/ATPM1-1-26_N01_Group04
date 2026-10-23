@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "timestamp_utc": "2026-10-19T16:46:45.255301+00:00",
+  "timestamp_utc": "2026-10-23T00:18:37.969879+00:00",
   "z3_version": "5.3.1",
   "bmc_method": "bounded transition unrolling; query whether any forbidden edge is traversed",
   "functions": [
@@ -252,137 +252,137 @@
   "generated_static_model_test_cases": 34,
   "memory_measurement": {
     "repeat_count": 20,
-    "process_rss_before_kib": 28728,
-    "process_rss_after_kib": 70200,
-    "process_peak_rss_kib": 78508,
-    "python_heap_current_bytes": 16242,
-    "python_heap_peak_bytes": 55271,
-    "system_mem_available_before_kib": 6704764,
-    "system_mem_available_after_kib": 6678352,
-    "elapsed_seconds": 6.918555,
-    "cpu_user_seconds": 6.878793,
-    "cpu_system_seconds": 0.072237
+    "process_rss_before_kib": 28500,
+    "process_rss_after_kib": 68916,
+    "process_peak_rss_kib": 77208,
+    "python_heap_current_bytes": 16360,
+    "python_heap_peak_bytes": 55389,
+    "system_mem_available_before_kib": 8929220,
+    "system_mem_available_after_kib": 8885988,
+    "elapsed_seconds": 6.737839,
+    "cpu_user_seconds": 6.681305,
+    "cpu_system_seconds": 0.093098
   },
   "memory_samples": [
     {
       "iteration": 1,
-      "process_rss_kib": 61896,
+      "process_rss_kib": 60612,
       "python_heap_current_bytes": 7194,
-      "python_heap_peak_bytes": 44422
+      "python_heap_peak_bytes": 44534
     },
     {
       "iteration": 2,
-      "process_rss_kib": 61908,
+      "process_rss_kib": 60624,
       "python_heap_current_bytes": 8193,
       "python_heap_peak_bytes": 47765
     },
     {
       "iteration": 3,
-      "process_rss_kib": 70184,
+      "process_rss_kib": 68888,
       "python_heap_current_bytes": 9096,
       "python_heap_peak_bytes": 48732
     },
     {
       "iteration": 4,
-      "process_rss_kib": 70184,
+      "process_rss_kib": 68888,
       "python_heap_current_bytes": 9607,
       "python_heap_peak_bytes": 49635
     },
     {
       "iteration": 5,
-      "process_rss_kib": 70184,
-      "python_heap_current_bytes": 9939,
-      "python_heap_peak_bytes": 50087
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 9998,
+      "python_heap_peak_bytes": 50146
     },
     {
       "iteration": 6,
-      "process_rss_kib": 78504,
-      "python_heap_current_bytes": 10362,
-      "python_heap_peak_bytes": 50510
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 10421,
+      "python_heap_peak_bytes": 50569
     },
     {
       "iteration": 7,
-      "process_rss_kib": 61996,
+      "process_rss_kib": 68888,
       "python_heap_current_bytes": 10761,
       "python_heap_peak_bytes": 50901
     },
     {
       "iteration": 8,
-      "process_rss_kib": 70188,
+      "process_rss_kib": 68888,
       "python_heap_current_bytes": 11096,
       "python_heap_peak_bytes": 51300
     },
     {
       "iteration": 9,
-      "process_rss_kib": 78508,
-      "python_heap_current_bytes": 11372,
-      "python_heap_peak_bytes": 51576
+      "process_rss_kib": 68888,
+      "python_heap_current_bytes": 11431,
+      "python_heap_peak_bytes": 51635
     },
     {
       "iteration": 10,
-      "process_rss_kib": 62000,
-      "python_heap_current_bytes": 11771,
-      "python_heap_peak_bytes": 51975
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 11830,
+      "python_heap_peak_bytes": 52034
     },
     {
       "iteration": 11,
-      "process_rss_kib": 70192,
+      "process_rss_kib": 77208,
       "python_heap_current_bytes": 12106,
       "python_heap_peak_bytes": 52310
     },
     {
       "iteration": 12,
-      "process_rss_kib": 70192,
+      "process_rss_kib": 77208,
       "python_heap_current_bytes": 12441,
       "python_heap_peak_bytes": 52645
     },
     {
       "iteration": 13,
-      "process_rss_kib": 70192,
-      "python_heap_current_bytes": 12717,
-      "python_heap_peak_bytes": 52921
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 12776,
+      "python_heap_peak_bytes": 52980
     },
     {
       "iteration": 14,
-      "process_rss_kib": 70192,
-      "python_heap_current_bytes": 13052,
-      "python_heap_peak_bytes": 53256
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13111,
+      "python_heap_peak_bytes": 53315
     },
     {
       "iteration": 15,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 13328,
-      "python_heap_peak_bytes": 53532
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13446,
+      "python_heap_peak_bytes": 53650
     },
     {
       "iteration": 16,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 13663,
-      "python_heap_peak_bytes": 53867
+      "process_rss_kib": 77208,
+      "python_heap_current_bytes": 13781,
+      "python_heap_peak_bytes": 53985
     },
     {
       "iteration": 17,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 13998,
-      "python_heap_peak_bytes": 54202
+      "process_rss_kib": 60724,
+      "python_heap_current_bytes": 14116,
+      "python_heap_peak_bytes": 54320
     },
     {
       "iteration": 18,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 14397,
-      "python_heap_peak_bytes": 54601
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 14515,
+      "python_heap_peak_bytes": 54719
     },
     {
       "iteration": 19,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 14732,
-      "python_heap_peak_bytes": 54936
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 14850,
+      "python_heap_peak_bytes": 55054
     },
     {
       "iteration": 20,
-      "process_rss_kib": 70200,
-      "python_heap_current_bytes": 15067,
-      "python_heap_peak_bytes": 55271
+      "process_rss_kib": 68916,
+      "python_heap_current_bytes": 15185,
+      "python_heap_peak_bytes": 55389
     }
   ]
 }

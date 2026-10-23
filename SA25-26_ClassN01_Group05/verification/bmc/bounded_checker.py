@@ -2,6 +2,7 @@ from collections import deque
 
 
 def shortest_edge_counterexample(model, forbidden_edge, bound=None):
+    """Dùng BFS tìm trace ngắn nhất từ state đầu tới một cạnh bị cấm trong bound."""
     queue = deque((state, [state]) for state in sorted(model.initial))
     shortest_depth = {state: 0 for state in model.initial}
     while queue:
@@ -20,6 +21,7 @@ def shortest_edge_counterexample(model, forbidden_edge, bound=None):
 
 
 def shortest_forbidden_edge_counterexample(model, forbidden_edges, bound=None):
+    """Tìm phản ví dụ ngắn nhất trong nhiều cạnh cấm; trả None nếu không có trace."""
     candidates = []
     for edge in forbidden_edges:
         path = shortest_edge_counterexample(model, edge, bound)
@@ -32,10 +34,12 @@ def shortest_forbidden_edge_counterexample(model, forbidden_edges, bound=None):
 
 
 def reachable_state_count(model):
+    """Đếm state có thể đi tới từ state đầu để dùng làm completeness bound."""
     return len(model.reachable_states())
 
 
 def graph_diameter(model):
+    """Tính độ dài đường đi ngắn nhất xa nhất từ state đầu tới các state reachable."""
     max_depth = 0
     for start in model.initial:
         queue = deque([(start, 0)])
@@ -51,12 +55,14 @@ def graph_diameter(model):
 
 
 def check_af_labels_from(model, target_labels, starts):
+    """Kiểm tra AF(target) bằng fixed point: mọi successor phải đã biết chắc tới target."""
     target_labels = set(target_labels)
     states = model.reachable_states()
     reaches_target = {
         state for state in states
         if target_labels.intersection(model.labels.get(state, set()))
     }
+    # Mở rộng ngược tập state bảo đảm tới target trên mọi nhánh; dừng khi đạt fixed point.
     changed = True
     while changed:
         changed = False

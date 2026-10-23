@@ -1,4 +1,4 @@
-"""Run Z3 BMC checks for all HRM models and record process memory."""
+"""Chạy BMC-Z3 cho bốn mô hình HRM và ghi kết quả cùng số đo bộ nhớ tiến trình."""
 import argparse
 import gc
 import json
@@ -25,6 +25,7 @@ from generate_artifacts import forbidden_edges_for_spec, generate_artifacts, spe
 
 
 def read_meminfo_kib(field):
+    """Đọc một trường từ /proc/meminfo theo KiB; trả None nếu hệ điều hành không hỗ trợ."""
     try:
         for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
             if line.startswith(field + ":"):
@@ -35,6 +36,7 @@ def read_meminfo_kib(field):
 
 
 def read_rss_kib():
+    """Đọc RSS hiện tại của chính tiến trình Python để quan sát RAM resident."""
     try:
         for line in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
             if line.startswith("VmRSS:"):
@@ -45,11 +47,13 @@ def read_rss_kib():
 
 
 def max_rss_kib():
+    """Lấy RSS đỉnh từ resource, quy đổi đơn vị phù hợp theo hệ điều hành."""
     value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return int(value / 1024) if platform.system() == "Darwin" else int(value)
 
 
 def run_case(spec, faulty=False, timeout_ms=5000):
+    """Tạo dữ liệu transition và gọi Z3 tìm cạnh Safety cấm; tùy chọn chèn lỗi có chủ ý."""
     states = [state["id"] for state in spec["states"]]
     transitions = [tuple(edge) for edge in spec["transitions"]]
     if faulty:
@@ -62,6 +66,7 @@ def run_case(spec, faulty=False, timeout_ms=5000):
 
 
 def run_liveness_case(spec, timeout_ms=5000):
+    """Chuyển nhãn target thành state ID rồi tìm đường tránh target bằng Z3."""
     states = [state["id"] for state in spec["states"]]
     transitions = [tuple(edge) for edge in spec["transitions"]]
     initial = next(state["id"] for state in spec["states"] if state.get("initial"))
@@ -83,9 +88,11 @@ def run_liveness_case(spec, timeout_ms=5000):
 
 
 def main():
+    """Lặp truy vấn, đo thời gian/RAM/CPU, ghi JSON-log và trả mã thoát theo kết quả."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeat", type=int, default=20, help="repetitions for the RAM smoke test")
     parser.add_argument("--timeout-ms", type=int, default=5000, help="timeout per Z3 query")
+    parser.add_argument("--results-dir", type=Path, default=ROOT / "results", help="directory for JSON and log output")
     args = parser.parse_args()
     if args.repeat < 1 or args.timeout_ms < 1:
         parser.error("--repeat and --timeout-ms must be positive")
@@ -99,18 +106,21 @@ def main():
     ram_before = read_meminfo_kib("MemAvailable")
     rss_before = read_rss_kib()
     cpu_before = resource.getrusage(resource.RUSAGE_SELF)
+    # tracemalloc chỉ theo dõi heap Python; RSS bên dưới còn bao gồm phần native của Z3.
     tracemalloc.start()
     started = time.perf_counter()
     final_rows = []
     memory_samples = []
     all_pass = True
 
+    # Lặp đủ số vòng để quan sát biến động RSS; mỗi vòng vẫn kiểm tra lại cả bốn mô hình.
     for _ in range(args.repeat):
         final_rows = []
         for spec in selected:
             safe_result = run_case(spec, faulty=False, timeout_ms=args.timeout_ms)
             faulty_result = run_case(spec, faulty=True, timeout_ms=args.timeout_ms)
             liveness_result = run_liveness_case(spec, timeout_ms=args.timeout_ms)
+            # Không có phản ví dụ ở model đúng phải UNSAT; cạnh chèn lỗi phải SAT.
             safe_pass = safe_result["status"] == "unsat"
             faulty_detected = faulty_result["status"] == "sat"
             liveness_pass = liveness_result["status"] == "unsat"
@@ -171,9 +181,9 @@ def main():
         "memory_measurement": memory,
         "memory_samples": memory_samples,
     }
-    results_path = ROOT / "results" / "z3_bmc_memory.json"
-    log_path = ROOT / "results" / "z3_bmc_memory.log"
-    results_path.parent.mkdir(exist_ok=True)
+    results_path = args.results_dir / "z3_bmc_memory.json"
+    log_path = args.results_dir / "z3_bmc_memory.log"
+    args.results_dir.mkdir(parents=True, exist_ok=True)
     results_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     lines = [
